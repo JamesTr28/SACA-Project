@@ -75,3 +75,13 @@ export async function fetchReport(jobId, token) {
     createdAt: new Date().toISOString()
   }), 800))
 }
+
+import axios from 'axios'
+
+// If you added the Vite proxy, baseURL can be '' (same origin)
+const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '' })
+
+export async function translateText({ text, beams = 6, max_len = 160, len_pen = 1.0 }) {
+  const { data } = await api.post('/api/translate', { text, beams, max_len, len_pen })
+  return data.translation
+}
