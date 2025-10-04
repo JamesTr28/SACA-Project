@@ -1,85 +1,107 @@
 import { defineStore } from 'pinia'
 import * as api from '@/services/api'
 
+const LS_TOKEN = 'token'
+const LS_USER  = 'user'
+const LS_PROFILE = 'profile'
+const LS_HISTORY = 'history'
+
 export const useTriageStore = defineStore('triage', {
   state: () => ({
-    token: localStorage.getItem('token') || null,
-    user: JSON.parse(localStorage.getItem('user') || 'null'),
+    token: localStorage.getItem(LS_TOKEN) || null,
+    user: JSON.parse(localStorage.getItem(LS_USER) || 'null'),
 
-    // 主页交互数据
+    // 输入数据
     textInput: '',
-    structuredInput: { age: '', gender: '', topSymptoms: [], severity: 0 },
+    selectedSymptoms: [],       // 图片多选得到的症状数组（字符串）
     audioBlob: null,
 
-    // 推理与结果
+    // 用户档案（会与每次请求一起发给后端）
+    profile: JSON.parse(localStorage.getItem(LS_PROFILE) || 'null') || {
+      gender: 1,                // 1 男, 0 女
+      age: '',
+      conditions: '',           // 既往病史
+      allergies: '',            // 过敏史
+      medications: '',          // 在用药物
+    },
+
+    // 状态 & 结果
     submitting: false,
-    lastJobId: null,
-    report: null,          // 结果报告对象
-    logs: [],              // 可视化/调试信息
     error: null,
+    lastReport: null,
+
+    // 历史记录（列表）
+    history: JSON.parse(localStorage.getItem(LS_HISTORY) || '[]'),
   }),
   getters: {
     isAuthenticated: (s) => !!s.token,
   },
   actions: {
+    // ------- Auth -------
     async login(email, password) {
       const { token, user } = await api.login(email, password)
-      this.token = token
-      this.user = user
-      localStorage.setItem('token', token)
-      localStorage.setItem('user', JSON.stringify(user))
+      this.token = token; this.user = user
+      localStorage.setItem(LS_TOKEN, token)
+      localStorage.setItem(LS_USER, JSON.stringify(user))
     },
     async register(payload) {
       const { token, user } = await api.register(payload)
-      this.token = token
-      this.user = user
-      localStorage.setItem('token', token)
-      localStorage.setItem('user', JSON.stringify(user))
+      this.token = token; this.user = user
+      localStorage.setItem(LS_TOKEN, token)
+      localStorage.setItem(LS_USER, JSON.stringify(user))
     },
     logout() {
-      this.token = null
-      this.user = null
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-    },
-    async fetchProfile() {
-      if (!this.token) return
-      this.user = await api.getMe(this.token)
-      localStorage.setItem('user', JSON.stringify(this.user))
+      this.token = null; this.user = null
+      localStorage.removeItem(LS_TOKEN)
+      localStorage.removeItem(LS_USER)
     },
 
-    // ---- 主页三种输入 ----
-    setText(v){ this.textInput = v },
-    setStructured(v){ this.structuredInput = { ...this.structuredInput, ...v } },
+    // ------- Profile -------
+    updateProfile(patch) {
+      this.profile = { ...this.profile, ...patch }
+      localStorage.setItem(LS_PROFILE, JSON.stringify(this.profile))
+    },
+
+    // ------- Inputs -------
+    setText(v){ this.textInput = v }
+    ,
+    setSelectedSymptoms(list){ this.selectedSymptoms = list || [] }
+    ,
     setAudio(blob){ this.audioBlob = blob },
 
-    // ---- 调用后端：根据输入提交并获取结果（保持主页统一提交口）----
-    async submitAll() {
+    // ------- Submit to backend -------
+    async submitFromText() {
+      return this._submit({ text: this.textInput })
+    },
+    async submitFromImages() {
+      return this._submit({ symptoms: this.selectedSymptoms })
+    },
+    async submitFromVoice() {
+      // 语音先传；报告在 _submit 拉取
+      if (this.audioBlob) {
+        await api.uploadAudio(this.audioBlob, this.token).catch(()=>{})
+      }
+      return this._submit({ via: 'voice' })
+    },
+
+    async _submit(payload) {
       try {
         this.error = null
         this.submitting = true
-        this.logs = []
 
-        const payload = {
-          text: this.textInput?.trim() || null,
-          structured: this.structuredInput,
-        }
-
-        // 分步命中你的 REST API；语音独立上传
-        if (this.audioBlob) {
-          const { jobId: audioJobId, note } = await api.uploadAudio(this.audioBlob, this.token)
-          this.logs.push(`Audio uploaded: job=${audioJobId}` + (note ? ` (${note})` : ''))
-        }
-        const { jobId } = await api.submitSymptoms(payload, this.token)
-        this.lastJobId = jobId
-        this.logs.push(`Symptoms submitted: job=${jobId}`)
-
-        // 轮询/一次性拉取报告（按你后端实际修改为轮询）
+        const full = { ...payload, profile: this.profile }
+        const { jobId } = await api.submitSymptoms(full, this.token)
         const report = await api.fetchReport(jobId, this.token)
-        this.report = report
-        this.logs.push('Report ready')
+
+        this.lastReport = report
+        // 写入历史
+        const item = { id: jobId, at: new Date().toISOString(), input: payload, profile: this.profile, report }
+        this.history.unshift(item)
+        localStorage.setItem(LS_HISTORY, JSON.stringify(this.history.slice(0, 200))) // 最多存 200 条
+        return report
       } catch (e) {
         this.error = e?.message || 'Submit failed'
+        throw e
       } finally {
         this.submitting = false
       }

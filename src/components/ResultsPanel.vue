@@ -5,7 +5,7 @@
     </template>
 
     <template v-else-if="error">
-      <div class="empty err">⚠ {{ error }}</div>
+      <div class="empty err"> {{ error }}</div>
     </template>
 
     <template v-else-if="!report">
