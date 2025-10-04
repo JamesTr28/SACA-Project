@@ -26,20 +26,19 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:modelValue'])
 
-// 使用真实图片路径
 const items = [
-  { key: 'abdominal_pain', label: 'Abdominal pain', note: 'placeholder', src: new URL('@/assets/abdominal-pain.png', import.meta.url).href },
-  { key: 'fever_high', label: 'High fever', note: 'placeholder', src: new URL('@/assets/fever_high.png', import.meta.url).href },
-  { key: 'cough', label: 'Cough', note: 'placeholder', src: new URL('@/assets/cough.png', import.meta.url).href },
-  { key: 'sore_throat', label: 'Sore throat', note: 'placeholder', src: new URL('@/assets/sore-throat.png', import.meta.url).href },
-  { key: 'headache', label: 'Headache', note: 'placeholder', src: new URL('@/assets/headache.png', import.meta.url).href },
-  { key: 'nausea', label: 'Nausea', note: 'placeholder', src: new URL('@/assets/nausea.png', import.meta.url).href },
-  { key: 'vomit', label: 'Vomit', note: 'placeholder', src: new URL('@/assets/vomit.png', import.meta.url).href },
-  { key: 'diarrhea', label: 'Diarrhea', note: 'placeholder', src: new URL('@/assets/diarrhea.png', import.meta.url).href },
-  { key: 'chest_pain', label: 'Chest pain', note: 'placeholder', src: new URL('@/assets/chest-pain.png', import.meta.url).href },
-  { key: 'short_breath', label: 'Shortness of breath', note: 'placeholder', src: new URL('@/assets/short_breath.png', import.meta.url).href },
-  { key: 'rash', label: 'Rash', note: 'placeholder', src: new URL('@/assets/rash.png', import.meta.url).href },
-  { key: 'fatigue', label: 'Fatigue', note: 'placeholder', src: new URL('@/assets/fatigue.png', import.meta.url).href },
+  { key: 'abdominal_pain', label: 'Abdominal pain',  src: new URL('@/assets/abdominal-pain.png', import.meta.url).href },
+  { key: 'fever_high', label: 'High fever',  src: new URL('@/assets/fever_high.png', import.meta.url).href },
+  { key: 'cough', label: 'Cough',  src: new URL('@/assets/cough.png', import.meta.url).href },
+  { key: 'sore_throat', label: 'Sore throat',  src: new URL('@/assets/sore-throat.png', import.meta.url).href },
+  { key: 'headache', label: 'Headache',  src: new URL('@/assets/headache.png', import.meta.url).href },
+  { key: 'nausea', label: 'Nausea',  src: new URL('@/assets/nausea.png', import.meta.url).href },
+  { key: 'vomit', label: 'Vomit',  src: new URL('@/assets/vomit.png', import.meta.url).href },
+  { key: 'diarrhea', label: 'Diarrhea',  src: new URL('@/assets/diarrhea.png', import.meta.url).href },
+  { key: 'chest_pain', label: 'Chest pain',  src: new URL('@/assets/chest-pain.png', import.meta.url).href },
+  { key: 'short_breath', label: 'Shortness of breath',  src: new URL('@/assets/short_breath.png', import.meta.url).href },
+  { key: 'rash', label: 'Rash',  src: new URL('@/assets/rash.png', import.meta.url).href },
+  { key: 'fatigue', label: 'Fatigue',  src: new URL('@/assets/fatigue.png', import.meta.url).href },
 ]
 
 const selectedSet = computed(() => new Set(props.modelValue))
