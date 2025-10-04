@@ -36,7 +36,6 @@ const sizeBytes = ref(0)
 let mediaRec, timer, startedAt = 0
 const chunks = []
 
-// 软限制：最长 60s、最大 10MB
 const MAX_MS = 60_000
 const MAX_BYTES = 10 * 1024 * 1024
 
@@ -49,7 +48,6 @@ async function start() {
   err.value = ''
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    // 一些浏览器支持 audio/webm;codecs=opus
     const type = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
       ? 'audio/webm;codecs=opus'
       : 'audio/webm'
