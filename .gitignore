@@ -6,6 +6,11 @@ node_modules
 .env
 .env.production
 .venv
+/backend/.venv/
+/backend/venv/
+
+ /src/backend/venv/
+ /src/backend/.venv/
 
 # Log files
 npm-debug.log*

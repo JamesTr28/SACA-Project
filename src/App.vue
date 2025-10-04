@@ -52,3 +52,10 @@ const year = new Date().getFullYear()
 .footer{padding:24px 0;color:#888;text-align:center}
 .hello{margin-right:6px}
 </style>
+
+<template>
+  <Translator />
+</template>
+<script setup>
+import Translator from '@/components/Translator.vue'
+</script>
