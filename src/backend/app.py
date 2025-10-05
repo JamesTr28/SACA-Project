@@ -1,5 +1,6 @@
 # src/backend/app.py
-import os, sys, time
+import os, sys, time, tempfile
+import torch
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
@@ -21,6 +22,7 @@ def asr_transcribe_endpoint():
     Accepts a single uploaded audio file under form field name 'audio'.
     Returns: { text, runtime_ms, device }
     """
+    print("[/asr/transcribe] HIT")
     if "audio" not in request.files:
         return jsonify({"detail": "Missing file field 'audio'."}), 400
 
