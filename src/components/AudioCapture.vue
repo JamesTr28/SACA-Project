@@ -7,6 +7,20 @@
       <button class="btn outline" :disabled="!recording" @click="stop">
         ■ Stop
       </button>
+<!-- Add near your existing preview area -->
+<div class="uploadWav">
+  <input
+    ref="fileInput"
+    type="file"
+    accept=".wav,audio/wav"
+    @change="onPickWav"
+    style="display:none"
+  />
+  <button class="btn outline" :disabled="asrLoading" @click="chooseWav">
+    ⤴ Upload .wav (demo)
+  </button>
+  <small class="meta">Select a local .wav file to transcribe</small>
+</div>
 
       <span v-if="recording" class="rec">● recording {{ mm }}:{{ ss }}</span>
       <span v-else-if="durationMs>0" class="dur">⏱ {{ mm }}:{{ ss }}</span>
@@ -224,6 +238,43 @@ const prettySize = computed(() => {
 })
 const mm = computed(() => String(Math.floor(durationMs.value / 60000)).padStart(2,'0'))
 const ss = computed(() => String(Math.floor((durationMs.value % 60000) / 1000)).padStart(2,'0'))
+const fileInput = ref(null)
+
+function chooseWav() {
+  asrError.value = ''
+  asrText.value = ''
+  fileInput.value?.click()
+}
+
+async function onPickWav(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  // Strict .wav checks: extension + mime (mime can be inconsistent across OS/browsers, so check both)
+  const nameOk = file.name.toLowerCase().endsWith('.wav')
+  const typeOk = (file.type || '').toLowerCase() === 'audio/wav' || (file.type || '').toLowerCase() === 'audio/x-wav'
+  if (!nameOk && !typeOk) {
+    asrError.value = 'Please select a .wav file.'
+    e.target.value = ''
+    return
+  }
+  if (file.size > MAX_WAV_BYTES) {
+    asrError.value = 'WAV too large (>25MB).'
+    e.target.value = ''
+    return
+  }
+
+  asrLoading.value = true
+  try {
+    const r = await asrTranscribeFile(file)
+    asrText.value = `${r.text}\n\n(${r.runtime_ms} ms on ${r.device})`
+  } catch (err) {
+    asrError.value = err?.message || 'Transcription failed'
+  } finally {
+    asrLoading.value = false
+    // reset input so selecting the same file again re-triggers change
+    e.target.value = ''
+  }
+}
 </script>
 
 <style scoped>
