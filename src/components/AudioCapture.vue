@@ -19,25 +19,38 @@
       <button class="link" @click="reset">Re-record</button>
       <small class="meta">~{{ prettySize }} • {{ mime }}</small>
     </div>
+
+    <div v-if="asrLoading" class="asrStatus">Transcribing…</div>
+    <p v-if="asrError" class="err">{{ asrError }}</p>
+    <div v-if="asrText" class="asrOut">
+      <strong>Transcript</strong>
+      <pre>{{ asrText }}</pre>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onBeforeUnmount } from 'vue'
+import { asrTranscribeFile } from '@/services/api' // POST /asr/transcribe expects field 'audio' (.wav)
 
 const emit = defineEmits(['recorded'])
+
 const recording = ref(false)
 const err = ref('')
 const url = ref('')
-const mime = ref('audio/webm')
+const mime = ref('audio/wav') // final upload type is .wav
 const durationMs = ref(0)
 const sizeBytes = ref(0)
+
+const asrLoading = ref(false)
+const asrText = ref('')
+const asrError = ref('')
 
 let mediaRec, timer, startedAt = 0
 const chunks = []
 
 const MAX_MS = 60_000
-const MAX_BYTES = 10 * 1024 * 1024
+const MAX_BYTES = 25 * 1024 * 1024 // WAV is larger; cap at 25MB
 
 function tick() {
   durationMs.value = Date.now() - startedAt
@@ -46,26 +59,41 @@ function tick() {
 
 async function start() {
   err.value = ''
+  asrError.value = ''
+  asrText.value = ''
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+
+    // We can record in whatever browser supports (usually webm/opus); we'll convert to WAV after stop.
     const type = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
       ? 'audio/webm;codecs=opus'
-      : 'audio/webm'
-    mime.value = type
+      : (MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '')
+    if (!type) throw new Error('This browser does not support WebM recording.')
 
     mediaRec = new MediaRecorder(stream, { mimeType: type })
+
     chunks.length = 0
     mediaRec.ondataavailable = (e) => { if (e.data?.size) chunks.push(e.data) }
-    mediaRec.onstop = () => {
-      const blob = new Blob(chunks, { type })
-      sizeBytes.value = blob.size
-      url.value = URL.createObjectURL(blob)
-      if (blob.size > MAX_BYTES) {
-        err.value = 'Audio too large (>10MB). Please record again.'
-        reset(false)
-        return
+    mediaRec.onstop = async () => {
+      const rawBlob = new Blob(chunks, { type })
+      try {
+        const wavFile = await toWavFile(rawBlob) // convert to 16-bit PCM WAV
+        sizeBytes.value = wavFile.size
+        mime.value = wavFile.type || 'audio/wav'
+        url.value = URL.createObjectURL(wavFile)
+
+        if (wavFile.size > MAX_BYTES) {
+          err.value = 'Audio too large (>25MB). Please record again.'
+          reset(false)
+          return
+        }
+
+        emit('recorded', wavFile)     // emit the WAV file upstream if needed
+        await transcribeWav(wavFile)  // upload to backend
+      } catch (convErr) {
+        console.error(convErr)
+        err.value = 'Failed to convert recording to WAV.'
       }
-      emit('recorded', blob)
     }
 
     mediaRec.start()
@@ -83,16 +111,104 @@ function stop() {
   try { mediaRec?.stop() } catch {}
   recording.value = false
   clearInterval(timer)
-  // 停止各 track
   mediaRec?.stream?.getTracks()?.forEach(t => t.stop())
 }
 
 function reset(clearEvent = true) {
-  URL.revokeObjectURL(url.value)
+  try { URL.revokeObjectURL(url.value) } catch {}
   url.value = ''
   sizeBytes.value = 0
   durationMs.value = 0
+  asrText.value = ''
+  asrError.value = ''
   if (clearEvent) emit('recorded', null)
+}
+
+async function transcribeWav(wavFile) {
+  asrLoading.value = true
+  asrError.value = ''
+  asrText.value = ''
+  try {
+    const r = await asrTranscribeFile(wavFile) // server sees .wav only
+    asrText.value = `${r.text}\n\n(${r.runtime_ms} ms on ${r.device})`
+  } catch (e) {
+    asrError.value = e?.message || 'Transcription failed'
+  } finally {
+    asrLoading.value = false
+  }
+}
+
+/**
+ * Convert an arbitrary audio Blob (e.g., webm/opus) to a 16-bit PCM WAV File.
+ * - Uses Web Audio API to decode to an AudioBuffer, then encodes WAV manually.
+ * - Output sample rate: original buffer.sampleRate (commonly 48k); ASR backend will resample to 16k.
+ */
+async function toWavFile(inputBlob) {
+  const arrayBuf = await inputBlob.arrayBuffer()
+
+  // Decode with Web Audio API
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+  const audioBuf = await audioCtx.decodeAudioData(arrayBuf.slice(0))
+
+  // Mixdown to mono Float32
+  const numCh = audioBuf.numberOfChannels
+  const len = audioBuf.length
+  const sampleRate = audioBuf.sampleRate
+  const tmp = new Float32Array(len)
+  for (let ch = 0; ch < numCh; ch++) {
+    tmp.set(audioBuf.getChannelData(ch), 0)
+    if (ch === 0) continue
+    const chData = audioBuf.getChannelData(ch)
+    for (let i = 0; i < len; i++) tmp[i] = (tmp[i] * ch + chData[i]) / (ch + 1)
+  }
+
+  const wavBuffer = encodeWavPCM16(tmp, sampleRate) // ArrayBuffer
+  const wavBlob = new Blob([wavBuffer], { type: 'audio/wav' })
+  return new File([wavBlob], 'recording.wav', { type: 'audio/wav' })
+}
+
+/**
+ * Encode Float32 PCM [-1,1] mono into 16-bit PCM WAV (little-endian).
+ */
+function encodeWavPCM16(float32Mono, sampleRate) {
+  const numChannels = 1
+  const bytesPerSample = 2
+  const blockAlign = numChannels * bytesPerSample
+  const byteRate = sampleRate * blockAlign
+  const dataLen = float32Mono.length * bytesPerSample
+  const buffer = new ArrayBuffer(44 + dataLen)
+  const view = new DataView(buffer)
+
+  // RIFF header
+  writeString(view, 0, 'RIFF')
+  view.setUint32(4, 36 + dataLen, true)
+  writeString(view, 8, 'WAVE')
+
+  // fmt  subchunk
+  writeString(view, 12, 'fmt ')
+  view.setUint32(16, 16, true)         // Subchunk1Size (16 for PCM)
+  view.setUint16(20, 1, true)          // AudioFormat (1 = PCM)
+  view.setUint16(22, numChannels, true)
+  view.setUint32(24, sampleRate, true)
+  view.setUint32(28, byteRate, true)
+  view.setUint16(32, blockAlign, true)
+  view.setUint16(34, 16, true)         // BitsPerSample
+
+  // data subchunk
+  writeString(view, 36, 'data')
+  view.setUint32(40, dataLen, true)
+
+  // PCM samples
+  let offset = 44
+  for (let i = 0; i < float32Mono.length; i++, offset += 2) {
+    let s = Math.max(-1, Math.min(1, float32Mono[i]))
+    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true)
+  }
+  return buffer
+}
+
+function writeString(view, offset, str) {
+  for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i))
 }
 
 onBeforeUnmount(() => {
@@ -121,4 +237,6 @@ const ss = computed(() => String(Math.floor((durationMs.value % 60000) / 1000)).
 .preview{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .link{background:none;border:none;padding:0;color:#2563eb;cursor:pointer}
 .meta{color:#777}
+.asrStatus{color:#555}
+.asrOut pre{white-space:pre-wrap;background:#f7f7f7;padding:8px;border-radius:8px}
 </style>
