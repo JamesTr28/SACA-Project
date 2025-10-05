@@ -21,6 +21,17 @@ async function req(path, { method='GET', token, json, form } = {}) {
   try { return await res.json() } catch { return {} }
 }
 
+// Translate from Warlpiri to English
+
+export async function translate(text, beams = 6, maxLen = 160, lenPen = 1.0) {
+  const res = await fetch(`${BASE}/translate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, beams, max_len: maxLen, len_pen: lenPen }),
+  });
+  if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
+  return res.json();
+}
 /** ---------- Auth ---------- */
 export async function login(email, password) {
   // 真实接口：return await req('/auth/login', { method:'POST', json:{email,password} })
