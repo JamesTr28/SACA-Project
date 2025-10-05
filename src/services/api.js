@@ -20,6 +20,22 @@ async function req(path, { method='GET', token, json, form } = {}) {
   // 某些接口可能204
   try { return await res.json() } catch { return {} }
 }
+// Audio inference
+export async function asrTranscribeFile(file) {
+  const fd = new FormData();
+  fd.append("audio", file); // field name must be 'audio'
+
+  const res = await fetch(`${BASE}/asr/transcribe`, {
+    method: "POST",
+    body: fd, // no Content-Type header; browser sets multipart boundary
+  });
+
+  if (!res.ok) {
+    const detail = await res.json().catch(() => ({}));
+    throw new Error(detail?.detail || `HTTP ${res.status}`);
+  }
+  return res.json(); // { text, runtime_ms, device }
+}
 
 // Translate from Warlpiri to English
 
