@@ -8,7 +8,9 @@ node_modules
 .venv
 /backend/.venv/
 /backend/venv/
-
+**/.venv/
+**/venv/
+**_pycache__/
  /src/backend/venv/
  /src/backend/.venv/
 
