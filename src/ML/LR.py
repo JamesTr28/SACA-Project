@@ -7,7 +7,7 @@ def predict(input_symptoms: []):
     le = joblib.load("src/ML/label_encoder.pkl")
 
     # Load the original dataset just to get column names
-    df = pd.read_csv("src/ML/Final_Augmented_dataset_Diseases_and_Symptoms.csv")
+    df = pd.read_csv("src/ML/diseases_symptoms_sample_trim.csv")
     df.columns = df.columns.str.replace(' ', '_')
 
     # Drop disease column
