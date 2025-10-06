@@ -3,6 +3,11 @@ node_modules
 /dist
 
 # local env files
+bin
+lib
+include
+share
+env
 .env
 .env.production
 .venv
