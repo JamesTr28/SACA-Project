@@ -635,6 +635,66 @@ def combine_features(out):
             "triage_level": triage
         }
 
+# ===========================
+# Public helper functions
+# ===========================
+
+def extract_and_combine(text: str) -> dict:
+    """
+    Process a single sentence:
+    1) run rule-based NLP extraction (extract_features)
+    2) post-process to the final minimal JSON (combine_features)
+    Returns the final JSON dict.
+    """
+    feats = extract_features(text)
+    final = combine_features(feats)
+    return final
+
+
+def process_texts(texts):
+    """
+    Process a list of sentences and return list of results:
+    [
+      {"input_text": <str>, "output": <final_json>},
+      ...
+    ]
+    """
+    results = []
+    for t in texts:
+        if not t or not str(t).strip():
+            continue
+        out = extract_and_combine(t)
+        results.append({"input_text": t, "output": out})
+    return results
+
+
+def process_file(input_path: str, encoding: str = "utf-8"):
+    """
+    Read a plain text file (one sentence per line),
+    run processing, and return list of results (same format as process_texts).
+    """
+    with open(input_path, "r", encoding=encoding) as f:
+        lines = [ln.strip() for ln in f if ln.strip()]
+    return process_texts(lines)
+
+
+def save_json(obj, output_path: str, ensure_ascii: bool = False):
+    """
+    Save any Python object as a pretty JSON file.
+    """
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(obj, f, indent=2, ensure_ascii=ensure_ascii)
+
+
+def save_ndjson(items, output_path: str, ensure_ascii: bool = False):
+    """
+    Save a list of dicts as NDJSON (one JSON per line).
+    Useful for streaming / large outputs.
+    """
+    with open(output_path, "w", encoding="utf-8") as f:
+        for it in items:
+            f.write(json.dumps(it, ensure_ascii=ensure_ascii) + "\n")
+
 
 # ======== demo / tests ========
 # tests = [
@@ -657,26 +717,20 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Extract medical features from English sentences.")
     parser.add_argument("--input", "-i", type=str, required=True,
-                        help="Path to a text file containing one English sentence per line.")
+                        help="Path to a text file; one English sentence per line.")
     parser.add_argument("--output", "-o", type=str, default="output.json",
                         help="Path to save extracted JSON results.")
+    parser.add_argument("--ndjson", action="store_true",
+                        help="Save as NDJSON (one JSON per line) instead of a single JSON array.")
     args = parser.parse_args()
 
-    # Read sentences
-    with open(args.input, "r", encoding="utf-8") as f:
-        lines = [l.strip() for l in f if l.strip()]
+    # Use the helper functions for clarity and reuse
+    results = process_file(args.input)
 
-    results = []
-    for line in lines:
-        feats = extract_features(line)
-        combined = combine_features(feats)
-        results.append({
-            "input_text": line,
-            "output": combined
-        })
+    # Choose save format
+    if args.ndjson:
+        save_ndjson(results, args.output, ensure_ascii=False)
+    else:
+        save_json(results, args.output, ensure_ascii=False)
 
-    # Save JSON
-    with open(args.output, "w", encoding="utf-8") as f:
-        json.dump(results, f, indent=2, ensure_ascii=False)
-
-    print(f" Processed {len(results)} sentences → saved to {args.output}")
+    print(f"✅ Processed {len(results)} sentences → saved to {args.output}")
