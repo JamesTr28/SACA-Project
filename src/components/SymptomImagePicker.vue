@@ -50,10 +50,20 @@ function toggle(key){
 </script>
 
 <style scoped>
-.picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
-.card{border:1px solid var(--border);border-radius:12px;background:var(--card);cursor:pointer;overflow:hidden;display:flex;flex-direction:column}
-.card img{width:100%;height:120px;object-fit:cover}
-.card .label{padding:8px}
-.card.active{outline:2px solid #2563eb}
-.muted{color:var(--muted)}
+.picker{ display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px }
+.card{
+  border:2px solid rgba(0,0,0,.18);               /* 默认描边 */
+  border-radius:12px; background:var(--card);
+  cursor:pointer; overflow:hidden; display:flex; flex-direction:column;
+}
+.card img{ width:100%; height:120px; object-fit:cover }
+.card .label{ padding:8px }
+.card.active{
+  border-color:#2e7d32;                           /* 绿色边 */
+  outline:3px solid color-mix(in srgb, #2e7d32 35%, transparent);
+  box-shadow:0 3px 16px rgba(0,0,0,.08);
+}
+.card:focus{ outline:none; }
+.muted{ color:var(--muted) }
+
 </style>

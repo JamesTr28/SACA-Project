@@ -1,35 +1,202 @@
-/* 主题变量 */
+/* === Pastel Green Animated Background (global) === */
 :root {
-  --bg: #f8f8f8;
-  --card: #ffffff;
-  --text: #111111;
-  --muted: #6b7280;
-  --border: #eeeeee;
-  --btn-bg: #111111;
-  --btn-fg: #ffffff;
-  --btn-outline-bg: #ffffff;
-  --btn-outline-fg: #111111;
-  --btn-outline-border: #111111;
+  
+  --g1: #AFE1AF; /* rgb(175,225,175) */
+  --g2: #90EE90; /* rgb(144,238,144) */
+  --g3: #98FB98; /* rgb(152,251,152) */
+  --g4: #ECFFDC; /* rgb(236,255,220) */
+  --g5: #C1E1C1; /* rgb(193,225,193) */
+
+  /* 渐变 */
+  --bg-angle: 120deg;
+  --bg-size: 320% 320%;
+  --bg-duration: 28s;
+  --bg-ease: ease-in-out;
 }
 
-.dark {
-  --bg: #0b0b0c;
-  --card: #131316;
-  --text: #eaeaea;
-  --muted: #9aa0a6;
-  --border: #2a2a2e;
-  --btn-bg: #eaeaea;
-  --btn-fg: #0b0b0c;
-  --btn-outline-bg: #131316;
-  --btn-outline-fg: #eaeaea;
-  --btn-outline-border: #4b5563;
+.back-info {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+.back-info .btn {
+  font-size: 14px;
+  padding: 6px 14px;
 }
 
+/* 统一给所有页面应用：html / body / #app */
 html, body, #app {
-  background: var(--bg);
-  color: var(--text);
+  min-height: 100%;
+  /* 多层次渐变：主线性渐变 + 轻微条纹*/
+  background:
+    linear-gradient(var(--bg-angle),
+      var(--g1),
+      var(--g2),
+      var(--g3),
+      var(--g4),
+      var(--g5)
+    ),
+    repeating-linear-gradient(
+      135deg,
+      rgba(255,255,255,0.06) 0px,
+      rgba(255,255,255,0.06) 8px,
+      rgba(255,255,255,0.0) 8px,
+      rgba(255,255,255,0.0) 16px
+    );
+  background-size: var(--bg-size), 140px 140px;
+  background-attachment: fixed, fixed; /* 固定背景，滚动不动更丝滑 */
+  animation: bg-pan var(--bg-duration) var(--bg-ease) infinite alternate;
 }
-.card { background: var(--card); border-color: var(--border); }
-.btn.primary { background: var(--btn-bg); color: var(--btn-fg); }
-.btn.outline { background: var(--btn-outline-bg); color: var(--btn-outline-fg); border-color: var(--btn-outline-border); }
-.muted { color: var(--muted); }
+
+/* 夜间模式 */
+html.dark::before,
+body.dark::before {
+  content: "";
+  position: fixed;
+  inset: 0;                     /* 顶/右/底/左=0，铺满视口 */
+  background: rgba(0, 0, 0, 0.38); /* 暗化强度，0.32~0.45 自行调 */
+  pointer-events: none;         /* 让点击穿透到页面 */
+  z-index: 2147483647;          /* 最高，保证盖住一切 */
+  transition: background 0.35s ease;
+}
+
+/* 覆盖 */
+html, body, #app { min-height: 100vh; }
+
+/* 切换更柔 */
+body { transition: background 0.35s ease; }
+
+
+
+/* 背景动画：通过移动背景位置产生“规律性”的柔和变化 */
+@keyframes bg-pan {
+  0%   { background-position: 0% 0%, 0 0; }
+  25%  { background-position: 50% 25%, 0 0; }
+  50%  { background-position: 100% 50%, 0 0; }
+  75%  { background-position: 50% 75%, 0 0; }
+  100% { background-position: 0% 100%, 0 0; }
+}
+
+/* 让主要容器、卡片和控件在新背景下更清晰（和你原有变量系统兼容） */
+.card { background: var(--card); backdrop-filter: saturate(1.05); }
+.container, .wrap { backdrop-filter: none; }
+
+/* 默认态：就有可见描边 + 区分背景 */
+body input[type="text"],
+body input[type="number"],
+body textarea,
+body select{
+  width:100%;
+  padding:10px 12px;
+  border-radius:10px;
+  background: rgba(255, 255, 255, 0.307) !important;     /* 区分背景 */
+  color: inherit;
+  border: 2px solid rgba(0,0,0,.18) !important;     /* 默认描边 */
+  outline: none;
+}
+
+/* 聚焦态：绿色高亮 */
+body input:focus,
+body textarea:focus,
+body select:focus{
+  border-color:#2e7d32 !important;
+  box-shadow:0 0 0 3px color-mix(in srgb, #2e7d32 22%, transparent) !important;
+}
+/* === 全局按钮风格统一 === */
+button.btn,
+.btn {
+  font-family: inherit;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 2px solid #2e7d32;
+  background: linear-gradient(135deg, #90ee90 0%, #afe1af 100%);
+  color: #0b3320;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* hover 状态：更深绿 */
+button.btn:hover,
+.btn:hover {
+  background: linear-gradient(135deg, #98fb98 0%, #90ee90 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 10px rgb(0, 0, 0);
+}
+
+/* 按下状态：略暗 */
+button.btn:active,
+.btn:active {
+  transform: scale(0.97);
+  background: #2e7d32;
+  color: #fff;
+  box-shadow: 0 5px 6px rgba(0, 0, 0, 0.2) inset;
+}
+
+/* 禁用状态 */
+button.btn:disabled,
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #c1e1c1;
+  border-color: #c1e1c1;
+  box-shadow: none;
+}
+
+/* === outline 边框按钮变体 === */
+button.btn.outline,
+.btn.outline {
+  background: transparent;
+  color: #2e7d32;
+  border: 2px solid #2e7d32;
+}
+
+button.btn.outline:hover,
+.btn.outline:hover {
+  background: #c2e7c2;
+  color: #0b3320;
+}
+
+/* === 分页器按钮风格 === */
+.pager {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.pager button {
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 2px solid #2e7d32;
+  background: #ecffdc;                /* 🌿 你指定的浅绿 */
+  color: #0b3320;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* hover / active 效果 */
+.pager button:hover {
+  background: #c1e1c1;                /* hover 时略深 */
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.pager button:active {
+  transform: scale(0.97);
+  background: #2e7d32;
+  color: #fff;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* 当前页高亮（选中） */
+.pager button.on {
+  background: #2e7d32;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
