@@ -1,5 +1,9 @@
 <template>
   <div class="app">
+    <div class="bg-floating">
+      <img v-for="n in bgImages" :key="n" :src="`/src/assets/bg/${n}.png`" class="float" />
+    </div>
+    
     <header class="navbar">
       <div class="brand" @click="$router.push('/')">
         <img src="/src/assets/logo.jpg" alt="logo" />
@@ -45,12 +49,118 @@
 </template>
 
 <script setup>
-import { onMounted, watch } from 'vue'
+import { onMounted, nextTick, onBeforeUnmount, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTriageStore } from '@/store/triageStore'
-import { useUiStore } from '@/store/uiStore'
 import { useI18n } from '@/i18n/useI18n'
 
+// 背景图片编号（/src/assets/bg/{n}.png）
+const bgImages = [1, 2, 3, 4, 5, 6, 7]
+
+// ========== 随机不重叠漂浮算法 ==========
+const MIN_SIZE = 64
+const MAX_SIZE = 140
+const GAP = 12
+const MAX_TRIES_PER_IMG = 120
+
+function rand(min, max) {
+  return Math.random() * (max - min) + min
+}
+function clamp(v, lo, hi) {
+  return Math.max(lo, Math.min(hi, v))
+}
+function radiusOf(size) {
+  return size / 2
+}
+
+function placeNonOverlapping(vw, vh, elements) {
+  const placed = []
+  for (let i = 0; i < elements.length; i++) {
+    let tries = 0
+    const size = rand(MIN_SIZE, MAX_SIZE)
+    const r = radiusOf(size)
+    let found = false
+
+    while (tries++ < MAX_TRIES_PER_IMG && !found) {
+      const x = rand(r + GAP, vw - (r + GAP))
+      const y = rand(r + GAP, vh - (r + GAP))
+
+      let ok = true
+      for (const p of placed) {
+        const dx = x - p.x
+        const dy = y - p.y
+        const dist2 = dx * dx + dy * dy
+        const minDist = r + p.r + GAP
+        if (dist2 < minDist * minDist) {
+          ok = false
+          break
+        }
+      }
+
+      if (ok) {
+        const driftMax = 80
+        const driftX = rand(-driftMax, driftMax)
+        const driftY = rand(-driftMax, driftMax)
+        const duration = 28 + Math.random() * 18
+        const delay = Math.random() * 8
+        placed.push({ x, y, r, size, driftX, driftY, duration, delay })
+        found = true
+      }
+    }
+
+    if (!found) {
+      const size = rand(MIN_SIZE, MAX_SIZE)
+      const r = radiusOf(size)
+      const x = clamp(rand(r + GAP, vw - (r + GAP)), r, vw - r)
+      const y = clamp(rand(r + GAP, vh - (r + GAP)), r, vh - r)
+      const driftX = rand(-60, 60)
+      const driftY = rand(-60, 60)
+      const duration = 28 + Math.random() * 18
+      const delay = Math.random() * 8
+      placed.push({ x, y, r, size, driftX, driftY, duration, delay })
+    }
+  }
+  return placed
+}
+
+let resizeTimer = null
+function initFloating() {
+  const els = Array.from(document.querySelectorAll('.bg-floating .float'))
+  if (!els.length) return
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+  const placed = placeNonOverlapping(vw, vh, els)
+
+  els.forEach((el, idx) => {
+    const p = placed[idx]
+    el.style.left = `${p.x - p.r}px`
+    el.style.top = `${p.y - p.r}px`
+    el.style.width = `${p.size}px`
+    el.style.setProperty('--dx', `${p.driftX}px`)
+    el.style.setProperty('--dy', `${p.driftY}px`)
+    el.style.animationDuration = `${p.duration}s`
+    el.style.animationDelay = `${p.delay}s`
+    el.style.opacity = String(0.15 + Math.random() * 0.15)
+    el.style.transform = `scale(${0.7 + Math.random() * 0.8})`
+  })
+}
+
+// ========== 页面挂载 ==========
+onMounted(async () => {
+  await nextTick()
+  initFloating()
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer)
+    resizeTimer = setTimeout(initFloating, 150)
+  })
+})
+
+onBeforeUnmount(() => {
+  if (resizeTimer) clearTimeout(resizeTimer)
+  window.removeEventListener('resize', initFloating)
+})
+
+// ========== 夜间模式 & 多语言 ==========
 const triage = useTriageStore()
 const { isAuthenticated, user } = storeToRefs(triage)
 const { t, ui } = useI18n()
@@ -61,16 +171,12 @@ function toggleTheme() {
   ui.toggleTheme()
   applyTheme()
 }
-function toggleLocale() { ui.toggleLocale() }
-
-// 让 .dark 类加在 <html> 上，确保全页面都受影响
+function toggleLocale() {
+  ui.toggleLocale()
+}
 function applyTheme() {
   const root = document.documentElement
-  if (ui.theme === 'dark') {
-    root.classList.add('dark')
-  } else {
-    root.classList.remove('dark')
-  }
+  root.classList.toggle('dark', ui.theme === 'dark')
 }
 
 onMounted(() => {
@@ -78,6 +184,8 @@ onMounted(() => {
 })
 watch(() => ui.theme, applyTheme)
 </script>
+
+
 
 <style scoped>
 .navbar {

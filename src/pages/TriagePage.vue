@@ -48,6 +48,8 @@
     <!-- STEP 3: Self-Assessment (1-10) -->
     <div v-else-if="step===3" class="card">
       <h3>Self-Assessment</h3>
+
+      <!-- Severity -->
       <div class="row">
         <label>Self-assessed Severity: <strong>{{ sa.severity ?? '-' }}</strong></label>
         <input
@@ -60,8 +62,11 @@
         />
       </div>
       <p class="desc">{{ severityDesc(sa.severity) }}</p>
+      <!-- 🔽 Severity scale image -->
+      <img class="scale-img" src="@/assets/severity.png" alt="Severity scale" loading="lazy" decoding="async" />
 
-      <div class="row">
+      <!-- Feeling -->
+      <div class="row" style="margin-top:14px;">
         <label>Personal Feeling: <strong>{{ sa.feeling ?? '-' }}</strong></label>
         <input
           type="range"
@@ -73,6 +78,8 @@
         />
       </div>
       <p class="desc">{{ feelingDesc(sa.feeling) }}</p>
+      <!-- 🔽 Feeling scale image -->
+      <img class="scale-img" src="@/assets/feeling.png" alt="Feeling scale" loading="lazy" decoding="async" />
 
       <div class="actions">
         <button class="btn primary" @click="goConfirm()">Next</button>
@@ -81,9 +88,12 @@
   </section>
 </template>
 
+
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import severityImg from '@/assets/severity.png'   // 红色心形刻度图
+import feelingImg  from '@/assets/feeling.png'    // 表情刻度图
 import { storeToRefs } from 'pinia'
 import { useTriageStore } from '@/store/triageStore'
 import SymptomImagePicker from '@/components/SymptomImagePicker.vue'
