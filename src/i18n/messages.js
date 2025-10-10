@@ -167,7 +167,7 @@ export const messages = {
     symptom: { suggestions: 'Suggestions from report' },
   },
 
-    wep: {
+    wbp: {
     brand: 'Intelligent Triage',
 
     nav: {
