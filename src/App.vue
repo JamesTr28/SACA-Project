@@ -3,7 +3,7 @@
     <div class="bg-floating">
       <img v-for="n in bgImages" :key="n" :src="`/src/assets/bg/${n}.png`" class="float" />
     </div>
-    
+
     <header class="navbar">
       <div class="brand" @click="$router.push('/')">
         <img src="/src/assets/logo.jpg" alt="logo" />
@@ -14,7 +14,7 @@
         <RouterLink to="/" class="nav-btn">{{ t('nav.home') }}</RouterLink>
         <RouterLink to="/profile" class="nav-btn outline">{{ t('nav.history') }}</RouterLink>
       </nav>
-
+      <!-- test -->
       <div class="right-tools">
         <!-- 语言切换 -->
         <button class="btn outline small" @click="toggleLocale">
@@ -27,7 +27,7 @@
         </button>
 
         <!-- 登录状态 -->
-                <div class="auth">
+        <div class="auth">
           <template v-if="isAuthenticated">
             <span class="hello">{{ t('auth.hi') }}, {{ user?.name || user?.email }}</span>
             <button class="btn outline" @click="logout">{{ t('auth.logout') }}</button>
@@ -199,39 +199,103 @@ watch(() => ui.theme, applyTheme)
   top: 0;
   z-index: 10;
 }
-.brand { display: flex; gap: 8px; align-items: center; cursor: pointer; }
-.brand img { width: 28px; height: 28px; }
-.links { display: flex; gap: 16px; }
-.right-tools { display: flex; gap: 8px; align-items: center; }
-.auth { display: flex; gap: 8px; align-items: center; }
-.btn { padding: 6px 12px; border-radius: 10px; }
-.btn.outline { border: 1px solid var(--btn-outline-border); }
-.btn.small { padding: 4px 8px; }
-.container { max-width: 1100px; margin: 0 auto; padding: 20px; }
-.footer { padding: 24px 0; color: var(--muted); text-align: center; }
-.hello { margin-right: 6px; }
+
+.brand {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  cursor: pointer;
+}
+
+.brand img {
+  width: 28px;
+  height: 28px;
+}
+
+.links {
+  display: flex;
+  gap: 16px;
+}
+
+.right-tools {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.auth {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn {
+  padding: 6px 12px;
+  border-radius: 10px;
+}
+
+.btn.outline {
+  border: 1px solid var(--btn-outline-border);
+}
+
+.btn.small {
+  padding: 4px 8px;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.footer {
+  padding: 24px 0;
+  color: var(--muted);
+  text-align: center;
+}
+
+.hello {
+  margin-right: 6px;
+}
 
 /* Nav buttons — scoped in App.vue to beat global styles */
 .links .nav-btn {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 6px 12px; border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
   text-decoration: none;
-  background: #2e7d32; color: #fff;
+  background: #2e7d32;
+  color: #fff;
   border: 1px solid transparent;
   transition: transform .08s ease, box-shadow .12s ease;
 }
-.links .nav-btn:hover { transform: translateY(-1px); box-shadow: 0 2px 10px rgba(0,0,0,.08) }
+
+.links .nav-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .08)
+}
+
 .links .nav-btn.outline {
-  background: transparent; color: #2e7d32;
+  background: transparent;
+  color: #2e7d32;
   border-color: #2e7d32;
 }
-.links .router-link-active.nav-btn { box-shadow: inset 0 0 0 2px rgba(255,255,255,.18); }
+
+.links .router-link-active.nav-btn {
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .18);
+}
 </style>
 
 <!-- 🌙 夜间模式全局变暗效果 -->
 <style>
-html.dark, body.dark, #app.dark,
-.dark html, .dark body, .dark #app {
+html.dark,
+body.dark,
+#app.dark,
+.dark html,
+.dark body,
+.dark #app {
   filter: brightness(0.65) contrast(1.05);
   transition: filter 0.4s ease;
 }
@@ -241,4 +305,3 @@ body {
   transition: filter 0.4s ease, background 0.4s ease;
 }
 </style>
-
