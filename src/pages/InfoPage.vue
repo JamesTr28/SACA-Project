@@ -1,60 +1,69 @@
 <template>
   <section class="wrap">
-    <h2>Fill in basic information</h2>
+    <h2>{{ t('info.title') }}</h2>
     <form class="card" @submit.prevent="go">
       
       <div class="row">
-        <label>Gender</label>
+        <label>{{ t('info.gender') }}</label>
         <CustomSelect
         v-model="form.gender"
-        :options="[{label:'Male',value:1},{label:'Female',value:0}]"
-        placeholder="Select gender"
+        :options="genderOptions"
+        :placeholder="t('select.placeholder')"
         />
       </div>
 
 
       <div class="row">
-        <label>Age</label>
+        <label>{{ t('info.age') }}</label>
         <input type="number" v-model="form.age" min="0" />
       </div>
 
       <div class="row">
-        <label>Weight(kg)</label>
+        <label>{{ t('info.weight') }} (kg)</label>
         <input type="number" v-model="form.weight" min="0" />
       </div>
 
       <div class="row col">
-        <label>Current situation</label>
-        <textarea v-model="form.conditions" rows="2" placeholder="e.g. high blood pressure, diabetes"></textarea>
+        <label>{{ t('info.conditions') }}</label>
+        <textarea v-model="form.conditions" rows="2" :placeholder="t('info.conditions_ph')"></textarea>
       </div>
 
       <div class="row col">
-        <label>Allergies</label>
-        <textarea v-model="form.allergies" rows="2" placeholder="e.g. gluten, lactose"></textarea>
+        <label>{{ t('info.allergies') }}</label>
+        <textarea v-model="form.allergies" rows="2" :placeholder="t('info.allergies_ph')"></textarea>
       </div>
 
       <div class="row col">
-        <label>Medications in use</label>
-        <textarea v-model="form.medications" rows="2" placeholder="For example: metformin, amlodipine"></textarea>
+        <label>{{ t('info.meds') }}</label>
+        <textarea v-model="form.medications" rows="2" :placeholder="t('info.meds_ph')"></textarea>
       </div>
 
       <div class="actions">
-        <button class="btn primary" type="submit">Next step</button>
+        <button class="btn primary" type="submit">{{ t('info.next') }}</button>
       </div>
     </form>
   </section>
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTriageStore } from '@/store/triageStore'
+import { useI18n } from '@/i18n/useI18n'
 import CustomSelect from '@/components/CustomSelect.vue'   /* +++ */
+
+const { t } = useI18n()
 
 const store = useTriageStore()
 const router = useRouter()
 
 const form = reactive({ ...store.profile })
+
+const genderOptions = computed(() => [
+  { label: t('info.male'), value: 1 },
+  { label: t('info.female'), value: 0 }
+])
+
 function go(){
   store.updateProfile({ ...form })
   router.push('/triage')

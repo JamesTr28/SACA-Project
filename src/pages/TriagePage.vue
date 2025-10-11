@@ -1,28 +1,22 @@
 <template>
   <section class="wrap">
-    <h2>Symptom Input Guide</h2>
+    <h2>{{ t('triage.title') }}</h2>
 
     <!-- Modify info button: Navigate to Info page -->
     <div class="back-info">
-      <button class="btn outline" @click="goInfo">
-        Modify Personal Information
-      </button>
+      <button class="btn outline" @click="goInfo">{{ t('triage.modifyInfo') }}</button>
     </div>
 
     <!-- Step indicator => pager -->
     <div class="pager">
-      <button :class="{ on: step === 1 }" @click="step = 1">1 Images</button>
-      <button :class="{ on: step === 2 }" @click="step = 2">
-        2 Text/Voice
-      </button>
-      <button :class="{ on: step === 3 }" @click="step = 3">
-        3 Self-Assessment
-      </button>
+      <button :class="{on: step===1}" @click="step=1">{{ t('triage.pager1') }}</button>
+      <button :class="{on: step===2}" @click="step=2">{{ t('triage.pager2') }}</button>
+      <button :class="{on: step===3}" @click="step=3">{{ t('triage.pager3') }}</button>
     </div>
 
     <!-- STEP 1: Image selection + Real-time Tags -->
-    <div v-if="step === 1" class="card">
-      <h3>Select Images (Multiple Selection Allowed)</h3>
+    <div v-if="step===1" class="card">
+      <h3>{{ t('triage.images_title') }}</h3>
       <SymptomImagePicker v-model="selected" />
       <div class="tags" v-if="selected.length">
         <button
@@ -34,61 +28,35 @@
           {{ labelOf(k) }} <span class="x">×</span>
         </button>
       </div>
-      <small class="muted" v-else
-        >Click on images to select symptoms; click × on tags to cancel
-        selection.</small
-      >
+      <small class="muted" v-else>{{ t('triage.images_hint') }}</small>
 
       <div class="actions">
-        <button class="btn outline" @click="skip()">Skip</button>
-        <button class="btn primary" @click="next()">Next</button>
+        <button class="btn outline" @click="skip()">{{ t('common.skip') }}</button>
+        <button class="btn primary" @click="next()">{{ t('triage.next') }}</button>
       </div>
     </div>
 
     <!-- STEP 2: Text + Voice -->
-    <div v-else-if="step === 2" class="card">
-      <h3>Text</h3>
-      <!-- Translate button -->
-      <textarea
-        v-model="text"
-        rows="6"
-        placeholder="You can enter additional descriptions (optional)"
-      ></textarea>
-
-      <button
-        class="btn outline"
-        :disabled="submitting || transLoading || !text.trim()"
-        @click="translateAndFill"
-        title="Translate Warlpiri → English and replace the textarea"
-      >
-        {{ transLoading ? "Translating..." : "TRANSLATE" }}
-      </button>
-      <h3>Voice</h3>
-      <textarea
-        v-model="text"
-        rows="6"
-        placeholder="You can enter additional descriptions (optional)"
-      ></textarea>
+    <div v-else-if="step===2" class="card">
+      <h3>{{ t('triage.text_title') }}</h3>
+      <textarea v-model="text" rows="6" :placeholder="t('triage.text_ph')"></textarea>
       <div class="actions">
         <AudioCapture @recorded="onRecorded" />
       </div>
 
       <div class="actions spaced">
-        <button class="btn outline" @click="skip()">Skip</button>
-        <button class="btn primary" @click="next()">Next</button>
+        <button class="btn outline" @click="skip()">{{ t('common.skip') }}</button>
+        <button class="btn primary" @click="next()">{{ t('triage.next') }}</button>
       </div>
     </div>
 
     <!-- STEP 3: Self-Assessment (1-10) -->
-    <div v-else-if="step === 3" class="card">
-      <h3>Self-Assessment</h3>
+    <div v-else-if="step===3" class="card">
+      <h3>{{ t('triage.self_title') }}</h3>
 
       <!-- Severity -->
       <div class="row">
-        <label
-          >Self-assessed Severity:
-          <strong>{{ sa.severity ?? "-" }}</strong></label
-        >
+        <label>{{ t('triage.self_severity') }}: <strong>{{ sa.severity ?? '-' }}</strong></label>
         <input
           type="range"
           min="1"
@@ -100,19 +68,11 @@
       </div>
       <p class="desc">{{ severityDesc(sa.severity) }}</p>
       <!-- 🔽 Severity scale image -->
-      <img
-        class="scale-img"
-        src="@/assets/severity.png"
-        alt="Severity scale"
-        loading="lazy"
-        decoding="async"
-      />
+      <img class="scale-img" src="@/assets/severity.png" :alt="t('alt.severity_scale')" loading="lazy" decoding="async" />
 
       <!-- Feeling -->
-      <div class="row" style="margin-top: 14px">
-        <label
-          >Personal Feeling: <strong>{{ sa.feeling ?? "-" }}</strong></label
-        >
+      <div class="row" style="margin-top:14px;">
+        <label>{{ t('triage.self_feeling') }}: <strong>{{ sa.feeling ?? '-' }}</strong></label>
         <input
           type="range"
           min="1"
@@ -124,34 +84,29 @@
       </div>
       <p class="desc">{{ feelingDesc(sa.feeling) }}</p>
       <!-- 🔽 Feeling scale image -->
-      <img
-        class="scale-img"
-        src="@/assets/feeling.png"
-        alt="Feeling scale"
-        loading="lazy"
-        decoding="async"
-      />
+      <img class="scale-img" src="@/assets/feeling.png" :alt="t('alt.feeling_scale')" loading="lazy" decoding="async" />
 
       <div class="actions">
-        <button class="btn primary" @click="goConfirm()">Next</button>
+        <button class="btn primary" @click="goConfirm()">{{ t('triage.toConfirm') }}</button>
       </div>
     </div>
   </section>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
-import { useRouter } from "vue-router";
-import severityImg from "@/assets/severity.png"; // 红色心形刻度图
-import feelingImg from "@/assets/feeling.png"; // 表情刻度图
-import { storeToRefs } from "pinia";
-import { useTriageStore } from "@/store/triageStore";
-import SymptomImagePicker from "@/components/SymptomImagePicker.vue";
-import AudioCapture from "@/components/AudioCapture.vue";
-import { translate } from "@/services/api";
-const store = useTriageStore();
-const router = useRouter();
-const step = ref(1);
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
+import { useTriageStore } from '@/store/triageStore'
+import { useI18n } from '@/i18n/useI18n'
+import SymptomImagePicker from '@/components/SymptomImagePicker.vue'
+import AudioCapture from '@/components/AudioCapture.vue'
+
+const { t } = useI18n()
+
+const store = useTriageStore()
+const router = useRouter()
+const step = ref(1)
 
 // Image selection (synced with Tags in real-time)
 const selected = computed({
@@ -173,39 +128,11 @@ function onRecorded(blob) {
 
 // Self-Assessment
 const sa = computed({
-  get: () => store.selfAssessment,
-  set: (v) => (store.selfAssessment = v),
-});
-const severityTexts = [
-  "1 Very Mild: Almost no impact on daily life",
-  "2 Mild: Slight discomfort",
-  "3 Mild: Occasionally affects activities",
-  "4 Mild-Moderate: Needs attention",
-  "5 Moderate: Affects daily work/study",
-  "6 Moderate-Severe: Noticeable discomfort",
-  "7 Relatively Severe: Needs prompt handling",
-  "8 Severe: Recommend seeking medical attention soon",
-  "9 Very Severe: High concern",
-  "10 Critical: Seek immediate medical/emergency care",
-];
-const feelingTexts = [
-  "1 Very Reassured",
-  "2 Fairly Reassured",
-  "3 Okay",
-  "4 A Bit Worried",
-  "5 Moderately Worried",
-  "6 Noticeably Worried",
-  "7 Very Worried",
-  "8 Extremely Worried",
-  "9 Highly Anxious",
-  "10 Panicked/Urgent Help Needed",
-];
-function severityDesc(v) {
-  return v ? severityTexts[v - 1] : "Drag the slider to select (1-10)";
-}
-function feelingDesc(v) {
-  return v ? feelingTexts[v - 1] : "Drag the slider to select (1-10)";
-}
+  get:()=> store.selfAssessment,
+  set:(v)=> (store.selfAssessment = v),
+})
+function severityDesc(v){ return v ? t(`scales.severity.${v-1}`) : t('triage.self_help') }
+function feelingDesc(v){ return v ? t(`scales.feeling.${v-1}`) : t('triage.self_help') }
 
 // Navigation
 function next() {
@@ -240,22 +167,11 @@ async function translateAndFill() {
 }
 // Display tag labels
 const keyToLabel = {
-  abdominal_pain: "Abdominal Pain",
-  fever_high: "High Fever",
-  cough: "Cough",
-  sore_throat: "Sore Throat ",
-  headache: "Headache",
-  nausea: "Nausea",
-  vomit: "Vomiting ",
-  diarrhea: "Diarrhea",
-  chest_pain: "Chest Pain",
-  short_breath: "Shortness of Breath",
-  rash: "Rash",
-  fatigue: "Fatigue",
-};
-function labelOf(k) {
-  return keyToLabel[k] || k;
+  abdominal_pain: t('symptom.abdominal_pain'), fever_high: t('symptom.fever_high'), cough: t('symptom.cough'), sore_throat: t('symptom.sore_throat'),
+  headache: t('symptom.headache'), nausea: t('symptom.nausea'), vomit: t('symptom.vomit'), diarrhea: t('symptom.diarrhea'),
+  chest_pain: t('symptom.chest_pain'), short_breath: t('symptom.short_breath'), rash: t('symptom.rash'), fatigue: t('symptom.fatigue'),
 }
+function labelOf(k){ return keyToLabel[k] || k }
 </script>
 
 <style>

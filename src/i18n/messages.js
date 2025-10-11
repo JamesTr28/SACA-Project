@@ -1,19 +1,16 @@
 // src/i18n/messages.js
-export const messages = {
+const messages = {
   en: {
     brand: 'Intelligent Triage',
-
-    nav: {
-      home: 'Home',
-      history: 'History',
-      profile: 'Profile',
-    },
+    nav: { home: 'Home', history: 'History', profile: 'Profile' },
+    footer: { demo: 'Triage Demo' },
 
     auth: {
       login: 'Login',
       register: 'Register',
       logout: 'Logout',
       hi: 'Hi',
+      name: 'Name',
       email: 'Email',
       password: 'Password',
       noAccount: 'No account?',
@@ -37,6 +34,8 @@ export const messages = {
 
     intro: {
       title: 'How this project works',
+      welcome: 'Welcome! Please provide some basic information before starting the triage.',
+      disclaimer: 'Note: This is a demo project. Do not use it for real medical decisions.',
       step1: 'Fill in basic information (gender, age, current conditions, allergies, medications).',
       step2: 'Then, in the input page, describe symptoms via images / text / voice. Images are multi-select and will appear as removable tags.',
       step3: 'After confirming, you will get a triage result and complete a 1–10 self-assessment (with descriptions).',
@@ -66,17 +65,14 @@ export const messages = {
       pager1: '1 Image',
       pager2: '2 Text/Voice',
       pager3: '3 Self-assessment',
-
       images_title: 'Select images (multi-select)',
       images_hint: 'Click images to select symptoms. Tags will appear below; click × to remove.',
       tag_remove: 'Remove',
-
       text_title: 'Text / Voice',
       text_ph: 'You can type additional description (optional)',
       voice_tip: 'You may record first; audio will be uploaded on confirm.',
       next: 'Next',
       skip: 'Skip',
-
       self_title: 'Self-assessment',
       self_severity: 'Perceived severity',
       self_feeling: 'Personal feeling',
@@ -117,7 +113,7 @@ export const messages = {
     audio: {
       start: 'Start recording',
       stop: 'Stop',
-      recording: 'recording',
+      recording: 'Recording…',
       rerecord: 'Re-record',
       tooLarge: 'Audio too large (>10MB). Please record again.',
     },
@@ -134,7 +130,7 @@ export const messages = {
       copied: 'Copied!',
     },
 
-    // 1–10 文案（可在 UI 中组合显示）
+    // 1–10 labels
     scales: {
       severity: [
         '1 Minimal: barely affects daily life',
@@ -162,25 +158,38 @@ export const messages = {
       ],
     },
 
-    // 组件占位
     select: { placeholder: 'Select...' },
-    symptom: { suggestions: 'Suggestions from report' },
+
+    symptom: {
+      abdominal_pain: 'Abdominal pain',
+      fever_high: 'Fever',
+      cough: 'Cough',
+      sore_throat: 'Sore throat',
+      headache: 'Headache',
+      nausea: 'Nausea',
+      vomit: 'Vomit',
+      diarrhea: 'Diarrhea',
+      chest_pain: 'Chest pain',
+      short_breath: 'Shortness of breath',
+      rash: 'Rash',
+      fatigue: 'Fatigue',
+      suggestions: 'Suggestions from report',
+    },
   },
 
-    wbp: {
-    brand: 'Intelligent Triage',
+  
+  wep: {
 
-    nav: {
-      home: 'Nguru',
-      history: 'Nyurru-warnu',
-      profile: 'Profile',
-    },
+    brand: 'Intelligent Triage',
+    nav: { home: 'Hime', history: 'History', profile: 'Profile' },
+    footer: { demo: 'Triage Demo' },
 
     auth: {
       login: 'Login',
       register: 'Register',
       logout: 'Logout',
       hi: 'Hi',
+      name: 'Name',
       email: 'Email',
       password: 'Password',
       noAccount: 'No account?',
@@ -204,6 +213,8 @@ export const messages = {
 
     intro: {
       title: 'How this project works',
+      welcome: 'Welcome! Please provide some basic information before starting the triage.',
+      disclaimer: 'Note: This is a demo project. Do not use it for real medical decisions.',
       step1: 'Fill in basic information (gender, age, current conditions, allergies, medications).',
       step2: 'Then, in the input page, describe symptoms via images / text / voice. Images are multi-select and will appear as removable tags.',
       step3: 'After confirming, you will get a triage result and complete a 1–10 self-assessment (with descriptions).',
@@ -233,17 +244,14 @@ export const messages = {
       pager1: '1 Image',
       pager2: '2 Text/Voice',
       pager3: '3 Self-assessment',
-
       images_title: 'Select images (multi-select)',
       images_hint: 'Click images to select symptoms. Tags will appear below; click × to remove.',
       tag_remove: 'Remove',
-
       text_title: 'Text / Voice',
       text_ph: 'You can type additional description (optional)',
       voice_tip: 'You may record first; audio will be uploaded on confirm.',
       next: 'Next',
       skip: 'Skip',
-
       self_title: 'Self-assessment',
       self_severity: 'Perceived severity',
       self_feeling: 'Personal feeling',
@@ -284,7 +292,7 @@ export const messages = {
     audio: {
       start: 'Start recording',
       stop: 'Stop',
-      recording: 'recording',
+      recording: 'Recording…',
       rerecord: 'Re-record',
       tooLarge: 'Audio too large (>10MB). Please record again.',
     },
@@ -301,7 +309,7 @@ export const messages = {
       copied: 'Copied!',
     },
 
-    // 1–10 文案（可在 UI 中组合显示）
+    // 1–10 labels
     scales: {
       severity: [
         '1 Minimal: barely affects daily life',
@@ -329,8 +337,24 @@ export const messages = {
       ],
     },
 
-    // 组件占位
     select: { placeholder: 'Select...' },
-    symptom: { suggestions: 'Suggestions from report' },
+
+    symptom: {
+      abdominal_pain: 'Abdominal pain',
+      fever_high: 'Fever',
+      cough: 'Cough',
+      sore_throat: 'Sore throat',
+      headache: 'Headache',
+      nausea: 'Nausea',
+      vomit: 'Vomit',
+      diarrhea: 'Diarrhea',
+      chest_pain: 'Chest pain',
+      short_breath: 'Shortness of breath',
+      rash: 'Rash',
+      fatigue: 'Fatigue',
+      suggestions: 'Suggestions from report',
+    },
   },
 }
+
+export default messages

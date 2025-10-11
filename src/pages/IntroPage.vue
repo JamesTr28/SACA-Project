@@ -1,21 +1,24 @@
 <template>
   <section class="wrap">
-    <h2>Welcome</h2>
-    <p>This is a simple medical triage demo app that helps you make a preliminary assessment of the severity and urgency of your symptoms.</p>
-    <p>This system cannot replace a real doctor and cannot prescribe medicine. It only provides advice to users. If you feel unwell, please consult a doctor.</p>
+    <h2>{{ t('intro.title') }}</h2>
+    <p>{{ t('intro.welcome') }}</p>
+    <p>{{ t('intro.disclaimer') }}</p>
     <ol class="steps">
-      <li>First fill in the basic information</li>
-      <li>Then on the input page, describe your symptoms by text/voice/picture.</li>
-      <li>Then, you will be asked to rate the severity and personal feelings on a scale of 1–10 (with explanations for each level)。</li>
-      <li>The system will send all information to the backend for judgment, automatically analyze your symptoms, and give suggestions.</li>
+      <li>{{ t('intro.step1') }}</li>
+      <li>{{ t('intro.step2') }}</li>
+      <li>{{ t('intro.step3') }}</li>
+      <li>{{ t('intro.step4') }}</li>
     </ol>
-    <p class="muted">Tip: Your personal information will be sent together with your symptoms to the backend for comprehensive judgment.</p>
+    <p class="muted">{{ t('intro.tip') }}</p>
 
-    <button class="btn primary" @click="$router.push('/info')">I understand and agree to start</button>
+    <button class="btn primary" @click="$router.push('/info')">{{ t('intro.start') }}</button>
   </section>
 </template>
 
 <script setup>
+import { useI18n } from '@/i18n/useI18n'
+
+const { t } = useI18n()
 </script>
 
 <style scoped>

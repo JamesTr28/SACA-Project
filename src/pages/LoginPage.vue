@@ -1,12 +1,12 @@
 <template>
   <div class="auth-card">
-    <h2>Login</h2>
+    <h2>{{ t('auth.login') }}</h2>
     <form @submit.prevent="go">
-      <input v-model="email" type="email" placeholder="Email" required />
-      <input v-model="password" type="password" placeholder="Password" required />
-      <button class="btn primary" :disabled="loading">{{ loading ? '...' : 'Login' }}</button>
+      <input v-model="email" type="email" :placeholder="t('auth.email')" required />
+      <input v-model="password" type="password" :placeholder="t('auth.password')" required />
+      <button class="btn primary" :disabled="loading">{{ loading ? t('common.loading') : t('auth.login') }}</button>
     </form>
-    <p class="hint">No account? <RouterLink to="/register">Register</RouterLink></p>
+    <p class="hint">{{ t('auth.noAccount') }} <RouterLink to="/register">{{ t('auth.register') }}</RouterLink></p>
   </div>
 </template>
 
@@ -14,6 +14,9 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTriageStore } from '@/store/triageStore'
+import { useI18n } from '@/i18n/useI18n'
+
+const { t } = useI18n()
 
 const store = useTriageStore()
 const router = useRouter()
