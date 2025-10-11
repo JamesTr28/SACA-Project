@@ -1,6 +1,6 @@
 fastapi[all]
 sqlalchemy
-psycopg2-binary  # For PostgreSQL
+psycopg2-binary
 python-dotenv
 passlib[bcrypt]
 python-jose[cryptography]
