@@ -159,7 +159,6 @@ import { useI18n } from "@/i18n/useI18n";
 import SymptomImagePicker from "@/components/SymptomImagePicker.vue";
 import AudioCapture from "@/components/AudioCapture.vue";
 import { translate } from "@/services/api";
-import TranslateButton from "@/components/TranslateButton.vue";
 
 const { t } = useI18n();
 
