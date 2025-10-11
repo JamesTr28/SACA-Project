@@ -11,8 +11,8 @@
       </div>
 
       <nav class="links">
-        <RouterLink to="/" class="nav-btn">Home</RouterLink>
-        <RouterLink to="/profile" class="nav-btn outline">History</RouterLink>
+        <RouterLink to="/" class="nav-btn">{{ t('nav.home') }}</RouterLink>
+        <RouterLink to="/profile" class="nav-btn outline">{{ t('nav.history') }}</RouterLink>
       </nav>
 
       <div class="right-tools">
@@ -27,7 +27,7 @@
         </button>
 
         <!-- 登录状态 -->
-        <div class="auth">
+                <div class="auth">
           <template v-if="isAuthenticated">
             <span class="hello">{{ t('auth.hi') }}, {{ user?.name || user?.email }}</span>
             <button class="btn outline" @click="logout">{{ t('auth.logout') }}</button>

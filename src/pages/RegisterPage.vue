@@ -1,13 +1,13 @@
 <template>
   <div class="auth-card">
-    <h2>Register</h2>
+    <h2>{{ t('auth.register') }}</h2>
     <form @submit.prevent="go">
-      <input v-model="name" placeholder="Full name" required />
-      <input v-model="email" type="email" placeholder="Email" required />
-      <input v-model="password" type="password" placeholder="Password" required />
-      <button class="btn primary" :disabled="loading">{{ loading ? '...' : 'Create account' }}</button>
+      <input v-model="name" :placeholder="t('auth.name')" required />
+      <input v-model="email" type="email" :placeholder="t('auth.email')" required />
+      <input v-model="password" type="password" :placeholder="t('auth.password')" required />
+      <button class="btn primary" :disabled="loading">{{ loading ? t('common.loading') : t('auth.register') }}</button>
     </form>
-    <p class="hint">Already have an account? <RouterLink to="/login">Login</RouterLink></p>
+    <p class="hint">{{ t('auth.haveAccount') }} <RouterLink to="/login">{{ t('auth.login') }}</RouterLink></p>
   </div>
 </template>
 
@@ -15,6 +15,9 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTriageStore } from '@/store/triageStore'
+import { useI18n } from '@/i18n/useI18n'
+
+const { t } = useI18n()
 
 const store = useTriageStore()
 const router = useRouter()

@@ -19,6 +19,6 @@ export const useUiStore = defineStore('ui', {
       this.locale = l
       localStorage.setItem('locale', l)
     },
-    toggleLocale() { this.setLocale(this.locale === 'en' ? 'wbp' : 'en') },
+    toggleLocale() { this.setLocale(this.locale === 'en' ? 'wep' : 'en') },
   },
 })
