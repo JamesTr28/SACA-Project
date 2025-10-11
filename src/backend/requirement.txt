@@ -1,0 +1,9 @@
+fastapi[all]
+sqlalchemy
+psycopg2-binary  # For PostgreSQL
+python-dotenv
+passlib[bcrypt]
+python-jose[cryptography]
+joblib
+scikit-learn
+pandas
