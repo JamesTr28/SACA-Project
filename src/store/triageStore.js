@@ -57,7 +57,11 @@ export const useTriageStore = defineStore('triage', {
     setAudio(b){ this.audioBlob = b },
     setSelectedSymptoms(v){ this.selectedSymptoms = v || [] },
     removeSymptom(key){ this.selectedSymptoms = (this.selectedSymptoms||[]).filter(k=>k!==key) },
-
+    addSymptom(symptom) {
+     if (!this.selectedSymptoms.includes(symptom)) {
+    this.selectedSymptoms.push(symptom)
+    }
+    },
     // ---- 最终提交----
     async submitTriageFinal() {
       try{

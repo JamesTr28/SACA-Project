@@ -83,7 +83,13 @@
         <button class="btn outline" @click="skip()">
           {{ t("common.skip") }}
         </button>
-        <button class="btn primary" @click="next()">
+        <button
+          class="btn primary"
+          @click="
+            extract();
+            next();
+          "
+        >
           {{ t("triage.next") }}
         </button>
       </div>
@@ -159,7 +165,7 @@ import { useI18n } from "@/i18n/useI18n";
 import SymptomImagePicker from "@/components/SymptomImagePicker.vue";
 import AudioCapture from "@/components/AudioCapture.vue";
 import { translate } from "@/services/api";
-
+import { nlpProcessTexts } from "@/services/api"; // Added for NLP processing
 const { t } = useI18n();
 
 const store = useTriageStore();
@@ -183,7 +189,24 @@ const text = computed({
 function onRecorded(blob) {
   store.setAudio(blob);
 }
+function extract() {
+  console.log("Extracting symptoms from text:", text.value);
+  if (!text.value.trim()) return;
 
+  nlpProcessTexts(text.value)
+    .then((res) => {
+      console.log("NLP result:", res);
+      const results = res?.results || [];
+      console.log("NLP processed results:", results);
+      results.forEach((entry) => {
+        console.log("Processing entry:", entry);
+        store.addSymptom(entry);
+      });
+    })
+    .catch((e) => {
+      console.error("NLP processing error:", e);
+    });
+}
 // Self-Assessment
 const sa = computed({
   get: () => store.selfAssessment,
