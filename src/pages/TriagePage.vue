@@ -76,7 +76,9 @@
       ></textarea>
 
       <div class="actions">
-        <AudioCapture @recorded="onRecorded" />
+        <AudioCapture @recorded="onRecorded" 
+
+        />
       </div>
 
       <div class="actions spaced">
@@ -189,10 +191,19 @@ const text = computed({
 function onRecorded(blob) {
   store.setAudio(blob);
 }
+
+// Handle transcription from AudioCapture
+// transText = "";
+// function handleTranscribe(transcribedText) {
+//   console.log("Transcribed text received:", transcribedText);
+//   transText = transcribedText;
+// }
+
 function extract() {
   console.log("Extracting symptoms from text:", text.value);
   if (!text.value.trim()) return;
-
+  // newText = text.value + (transText ? ` ${transText}` : "");
+  // console.log("Combined text for NLP processing:", newText);
   nlpProcessTexts(text.value)
     .then((res) => {
       console.log("NLP result:", res);
