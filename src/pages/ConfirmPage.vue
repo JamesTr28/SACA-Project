@@ -1,47 +1,47 @@
 <template>
   <section class="wrap">
-    <h2>Confirm Your Input</h2>
+    <h2>{{ t('confirm.title') }}</h2>
 
     <div class="card">
-      <h3>Basic Information</h3>
+      <h3>{{ t('confirm.basic') }}</h3>
       <ul class="list">
-        <li>Gender: {{ profile.gender === 1 ? 'Male' : 'Female' }}</li>
-        <li>Age: {{ profile.age || '-' }}</li>
-        <li>Current Conditions: {{ profile.conditions || '-' }}</li>
-        <li>Allergy History: {{ profile.allergies || '-' }}</li>
-        <li>Current Medications: {{ profile.medications || '-' }}</li>
+        <li>{{ t('info.gender') }}: {{ profile.gender === 1 ? t('info.male') : t('info.female') }}</li>
+        <li>{{ t('info.age') }}: {{ profile.age || '-' }}</li>
+        <li>{{ t('info.conditions') }}: {{ profile.conditions || '-' }}</li>
+        <li>{{ t('info.allergies') }}: {{ profile.allergies || '-' }}</li>
+        <li>{{ t('info.meds') }}: {{ profile.medications || '-' }}</li>
       </ul>
     </div>
 
     <div class="card">
-      <h3>Symptoms</h3>
+      <h3>{{ t('confirm.symptoms') }}</h3>
       <div v-if="symptoms.length" class="tags">
         <span class="tag" v-for="k in symptoms" :key="k">{{ labelOf(k) }}</span>
       </div>
-      <div v-else class="muted">(No image symptoms selected)</div>
+      <div v-else class="muted">{{ t('confirm.noneSymptoms') }}</div>
     </div>
 
     <div class="card">
-      <h3>Text/Voice</h3>
-      <p><strong>Text:</strong> {{ text || '(None)' }}</p>
-      <p><strong>Voice:</strong> {{ audioBlob ? 'Recorded' : '(None)' }}</p>
+      <h3>{{ t('confirm.textVoice') }}</h3>
+      <p><strong>{{ t('confirm.text') }}:</strong> {{ text || t('confirm.voiceNo') }}</p>
+      <p><strong>{{ t('confirm.voice') }}:</strong> {{ audioBlob ? t('confirm.voiceYes') : t('confirm.voiceNo') }}</p>
     </div>
 
     <div class="card">
-      <h3>Self-Assessment</h3>
-      <p>Severity: {{ sa.severity ?? '(Not filled)' }}</p>
-      <p>Personal Feeling: {{ sa.feeling ?? '(Not filled)' }}</p>
+      <h3>{{ t('confirm.self') }}</h3>
+      <p>{{ t('triage.self_severity') }}: {{ sa.severity ?? t('confirm.voiceNo') }}</p>
+      <p>{{ t('triage.self_feeling') }}: {{ sa.feeling ?? t('confirm.voiceNo') }}</p>
     </div>
 
     <div class="actions">
-      <button class="btn outline" @click="$router.back()">Back</button>
+      <button class="btn outline" @click="$router.back()">{{ t('common.back') }}</button>
       <button class="btn primary" :disabled="submitting" @click="submit">
-        {{ submitting ? 'Submitting...' : 'Submit' }}
+        {{ submitting ? t('common.loading') : t('common.submit') }}
       </button>
     </div>
 
     <div class="card" v-if="report || error">
-      <h3>Results</h3>
+      <h3>{{ t('confirm.result') }}</h3>
       <ResultsPanel :report="report" :loading="submitting" :error="error" />
     </div>
   </section>
@@ -51,7 +51,10 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTriageStore } from '@/store/triageStore'
+import { useI18n } from '@/i18n/useI18n'
 import ResultsPanel from '@/components/ResultsPanel.vue'
+
+const { t } = useI18n()
 
 const store = useTriageStore()
 const { submitting, error, lastReport } = storeToRefs(store)
@@ -66,9 +69,18 @@ const report = computed(()=> lastReport.value)
 async function submit(){ await store.submitTriageFinal() }
 
 const keyToLabel = {
-  abdominal_pain:'Abdominal Pain', fever_high:'High Fever', cough:'Cough', sore_throat:'Sore Throat',
-  headache:'Headache', nausea:'Nausea', vomit:'Vomiting', diarrhea:'Diarrhea',
-  chest_pain:'Chest Pain', short_breath:'Shortness of Breath', rash:'Rash', fatigue:'Fatigue',
+  abdominal_pain: t('symptom.abdominal_pain'),
+  fever_high: t('symptom.fever_high'),
+  cough: t('symptom.cough'),
+  sore_throat: t('symptom.sore_throat'),
+  headache: t('symptom.headache'),
+  nausea: t('symptom.nausea'),
+  vomit: t('symptom.vomit'),
+  diarrhea: t('symptom.diarrhea'),
+  chest_pain: t('symptom.chest_pain'),
+  short_breath: t('symptom.short_breath'),
+  rash: t('symptom.rash'),
+  fatigue: t('symptom.fatigue'),
 }
 function labelOf(k){ return keyToLabel[k] || k }
 </script>

@@ -1,24 +1,24 @@
 <template>
   <section class="wrap">
-    <h2>Results History</h2>
-    <div v-if="!list.length" class="muted">No records yet</div>
+    <h2>{{ t('history.title') }}</h2>
+    <div v-if="!list.length" class="muted">{{ t('history.none') }}</div>
 
     <div class="items">
       <article v-for="it in list" :key="it.id" class="card item">
         <header>
           <strong>{{ new Date(it.at).toLocaleString() }}</strong>
-          <span class="muted">ID: {{ it.id }}</span>
+          <span class="muted">{{ t('history.id') }}: {{ it.id }}</span>
         </header>
 
         <div class="row">
-          <label>User</label>
+          <label>{{ t('history.profile') }}</label>
           <code class="mono">
             gender={{ it.payload?.profile?.gender }} age={{ it.payload?.profile?.age }}
           </code>
         </div>
 
         <div class="row">
-          <label>Input</label>
+          <label>{{ t('history.input') }}</label>
           <code class="mono">
             {{ it.payload?.text ? 'text' : '' }}
             {{ it.payload?.symptoms?.length ? (' symptoms['+it.payload.symptoms.join(',')+']') : '' }}
@@ -26,13 +26,13 @@
         </div>
 
         <div class="row">
-          <label>Result</label>
-          <span>Severity: {{ it.report?.finalDecision?.severity ?? '-' }}</span>
+          <label>{{ t('history.result') }}</label>
+          <span>{{ t('confirm.severity') }}: {{ it.report?.finalDecision?.severity ?? '-' }}</span>
         </div>
 
         <div class="row" v-if="it.selfAssessment">
-          <label>Self-Assessment</label>
-          <span>Severe {{ it.selfAssessment.severity }} / Feeling {{ it.selfAssessment.feeling }}</span>
+          <label>{{ t('history.self') }}</label>
+          <span>{{ t('triage.self_severity') }} {{ it.selfAssessment.severity }} / {{ t('triage.self_feeling') }} {{ it.selfAssessment.feeling }}</span>
         </div>
       </article>
     </div>
@@ -43,6 +43,9 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTriageStore } from '@/store/triageStore'
+import { useI18n } from '@/i18n/useI18n'
+
+const { t } = useI18n()
 
 const store = useTriageStore()
 const { history } = storeToRefs(store)
