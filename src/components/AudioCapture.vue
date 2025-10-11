@@ -1,7 +1,6 @@
 <template>
   <div class="audio">
     <div class="row">
-
       <button class="btn" :disabled="recording" @click="start">
         ▶ Start recording
       </button>
@@ -9,24 +8,24 @@
         ■ Stop
       </button>
       <!-- Add near your existing preview area -->
-      <div class="uploadWav">
-        <input
-          ref="fileInput"
-          type="file"
-          accept=".wav,audio/wav"
-          @change="onPickWav"
-          style="display: none"
-        />
-        <button class="btn outline" :disabled="asrLoading" @click="chooseWav">
-          ⤴ Upload .wav (demo)
-        </button>
-        <small class="meta">Select a local .wav file to transcribe</small>
-      </div>
 
       <span v-if="recording" class="rec">● recording {{ mm }}:{{ ss }}</span>
       <span v-else-if="durationMs > 0" class="dur">⏱ {{ mm }}:{{ ss }}</span>
     </div>
-
+    <div class="uploadWav">
+      <input
+        ref="fileInput"
+        type="file"
+        accept=".wav,audio/wav"
+        @change="onPickWav"
+        style="display: none"
+      />
+      <button class="btn outline" :disabled="asrLoading" @click="chooseWav">
+        ⤴ Upload .wav (demo)
+      </button>
+      <br />
+      <small class="meta">Select a local .wav file to transcribe</small>
+    </div>
     <p v-if="err" class="err">{{ err }}</p>
 
     <div v-if="url" class="preview">
@@ -48,7 +47,8 @@
 import { ref, computed, onBeforeUnmount } from "vue";
 import { asrTranscribeFile } from "@/services/api"; // POST /asr/transcribe expects field 'audio' (.wav)
 
-const emit = defineEmits(["recorded"]);
+
+const emit = defineEmits(["recorded", "transcribed"]);
 
 const recording = ref(false);
 const err = ref("");
@@ -72,7 +72,6 @@ const MAX_BYTES = 25 * 1024 * 1024; // WAV is larger; cap at 25MB
 // --- Translation wiring ---
 const transLoading = ref(false);
 const transError = ref(null);
-
 
 function tick() {
   durationMs.value = Date.now() - startedAt;
@@ -292,6 +291,7 @@ async function onPickWav(e) {
   try {
     const r = await asrTranscribeFile(file);
     asrText.value = `${r.text}\n\n(${r.runtime_ms} ms on ${r.device})`;
+    emit("transcribed", r.text); // or asrText.value if you prefer
   } catch (err) {
     asrError.value = err?.message || "Transcription failed";
   } finally {

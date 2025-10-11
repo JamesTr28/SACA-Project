@@ -36,6 +36,26 @@ export async function asrTranscribeFile(file) {
   }
   return res.json(); // { text, runtime_ms, device }
 }
+// Symptom extraction from text
+// src/frontend/api.js
+export async function nlpProcessTexts(text) {
+  const res = await fetch(`${BASE}/nlp/process`, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },
+    body: text
+  });
+
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    throw new Error(`HTTP ${res.status} ${txt}`);
+  }
+
+  try {
+    return await res.json(); // { results: [...] }
+  } catch {
+    return {};
+  }
+}
 
 // Translate from Warlpiri to English
 

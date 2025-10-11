@@ -11,6 +11,9 @@ if ROOT not in sys.path:
 
 from NLP_components.MT_Inference import translate as mt_translate, info as mt_info
 from NLP_components.ASR_Inference import transcribe as asr_transcribe
+from NLP_components.entext_train import process_texts, bootstrap_pipeline
+NLP = bootstrap_pipeline()  # returns an object holding nlp, matchers, dictionaries, etc.
+
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173"]}})
@@ -88,6 +91,70 @@ def translate():
         "runtime_ms": int((time.time() - t0) * 1000),
         **mt_info()
     })
+# @app.post("/nlp/process")
+# def nlp_process():
+#     """
+#     Body (JSON):
+#       { "texts": ["No fever but mild headache since yesterday", "HR 120"], "ndjson": false }
+#     or:
+#       { "text": "No fever but mild headache since yesterday", "ndjson": false }
 
+#     Returns:
+#       { "results": [ { ... }, { ... } ] }
+#     """
+#     try:
+#         data = request.get_json(force=True) or {}
+#     except Exception:
+#         return jsonify({"detail": "Invalid JSON"}), 400
+
+#     # Accept either 'texts' (list) or 'text' (single)
+#     texts = data.get("texts")
+#     if texts is None:
+#         single = (data.get("text") or "").strip()
+#         texts = [single] if single else None
+
+#     if not texts or not isinstance(texts, list):
+#         return jsonify({"detail": "Provide 'text' or 'texts' (array of strings)."}), 400
+
+#     # Optional flags you already support in your script
+#     ndjson = bool(data.get("ndjson") or False)
+
+#     try:
+#         t0 = time.time()
+#         # Pass the prebuilt NLP pipeline/context if your process_texts supports it
+#         results = process_texts(texts, nlp_ctx=NLP, ndjson=ndjson)  # adjust signature to your function
+#         ms = int((time.time() - t0) * 1000)
+#         return jsonify({"results": results, "runtime_ms": ms})
+#     except Exception as e:
+#         return jsonify({"detail": f"Processing failed: {e}"}), 500
+from flask import request, jsonify
+import time
+
+@app.post("/nlp/process")
+def nlp_process():
+    """
+    Accepts only plain text input:
+      Content-Type: text/plain
+      Body: "No fever but mild headache since yesterday"
+
+    Returns:
+      { "results": [ { ... } ], "runtime_ms": <int> }
+    """
+    if request.content_type != 'text/plain':
+        return jsonify({"detail": "Only 'text/plain' is accepted."}), 415
+
+    raw_text = request.data.decode('utf-8').strip()
+    if not raw_text:
+        return jsonify({"detail": "Empty text body."}), 400
+
+    texts = [raw_text]
+
+    try:
+        t0 = time.time()
+        results = process_texts(texts)  # remove nlp_ctx and ndjson if not needed
+        ms = int((time.time() - t0) * 1000)
+        return jsonify({"results": results, "runtime_ms": ms})
+    except Exception as e:
+        return jsonify({"detail": f"Processing failed: {e}"}), 500
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)
