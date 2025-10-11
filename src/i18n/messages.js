@@ -181,7 +181,7 @@ const messages = {
   wep: {
 
     brand: 'Intelligent Triage',
-    nav: { home: 'Hime', history: 'History', profile: 'Profile' },
+    nav: { home: 'Nguru', history: 'Nyurru-warnu', profile: 'Profile' },
     footer: { demo: 'Triage Demo' },
 
     auth: {
