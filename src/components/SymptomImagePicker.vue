@@ -27,18 +27,18 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 const items = [
-  { key: 'abdominal_pain', label: 'Abdominal pain',  src: new URL('@/assets/abdominal-pain.png', import.meta.url).href },
-  { key: 'fever_high', label: 'High fever',  src: new URL('@/assets/fever_high.png', import.meta.url).href },
-  { key: 'cough', label: 'Cough',  src: new URL('@/assets/cough.png', import.meta.url).href },
-  { key: 'sore_throat', label: 'Sore throat',  src: new URL('@/assets/sore-throat.png', import.meta.url).href },
-  { key: 'headache', label: 'Headache',  src: new URL('@/assets/headache.png', import.meta.url).href },
-  { key: 'nausea', label: 'Nausea',  src: new URL('@/assets/nausea.png', import.meta.url).href },
-  { key: 'vomit', label: 'Vomit',  src: new URL('@/assets/vomit.png', import.meta.url).href },
-  { key: 'diarrhea', label: 'Diarrhea',  src: new URL('@/assets/diarrhea.png', import.meta.url).href },
-  { key: 'chest_pain', label: 'Chest pain',  src: new URL('@/assets/chest-pain.png', import.meta.url).href },
-  { key: 'short_breath', label: 'Shortness of breath',  src: new URL('@/assets/short_breath.png', import.meta.url).href },
-  { key: 'rash', label: 'Rash',  src: new URL('@/assets/rash.png', import.meta.url).href },
-  { key: 'fatigue', label: 'Fatigue',  src: new URL('@/assets/fatigue.png', import.meta.url).href },
+  { key: 'abdominal_pain', label: 'Abdominal pain / Miyalu Raga',  src: new URL('@/assets/abdominal-pain.png', import.meta.url).href },
+  { key: 'fever_high', label: 'High fever / Papimi',  src: new URL('@/assets/fever_high.png', import.meta.url).href },
+  { key: 'cough', label: 'Cough / Kuntulpa',  src: new URL('@/assets/cough.png', import.meta.url).href },
+  { key: 'sore_throat', label: 'Sore throat / Waninja-kiri',  src: new URL('@/assets/sore-throat.png', import.meta.url).href },
+  { key: 'headache', label: 'Headache / Ruku-ruku',  src: new URL('@/assets/headache.png', import.meta.url).href },
+  { key: 'nausea', label: 'Nausea / Kalti-kalti-mani',  src: new URL('@/assets/nausea.png', import.meta.url).href },
+  { key: 'vomit', label: 'Vomit / Karlti-karlti',  src: new URL('@/assets/vomit.png', import.meta.url).href },
+  { key: 'diarrhea', label: 'Diarrhea / Kuna-kalykala',  src: new URL('@/assets/diarrhea.png', import.meta.url).href },
+  { key: 'chest_pain', label: 'Chest pain / Yutarki raga',  src: new URL('@/assets/chest-pain.png', import.meta.url).href },
+  { key: 'short_breath', label: 'Shortness of breath / Ngaany-kutu-kutu',  src: new URL('@/assets/short_breath.png', import.meta.url).href },
+  { key: 'rash', label: 'Rash / Janjalyarra',  src: new URL('@/assets/rash.png', import.meta.url).href },
+  { key: 'fatigue', label: 'Fatigue / Murra-murra',  src: new URL('@/assets/fatigue.png', import.meta.url).href },
 ]
 
 const selectedSet = computed(() => new Set(props.modelValue))

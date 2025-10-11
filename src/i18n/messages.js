@@ -167,12 +167,12 @@ export const messages = {
     symptom: { suggestions: 'Suggestions from report' },
   },
 
-    wep: {
+    wbp: {
     brand: 'Intelligent Triage',
 
     nav: {
-      home: 'Home',
-      history: 'History',
+      home: 'Nguru',
+      history: 'Nyurru-warnu',
       profile: 'Profile',
     },
 
@@ -188,16 +188,16 @@ export const messages = {
     },
 
     common: {
-      next: 'Next',
-      skip: 'Skip',
-      back: 'Back',
+      next: 'Nganalku',
+      skip: 'Yani',
+      back: 'Kulpami',
       submit: 'Submit',
       save: 'Save',
-      confirm: 'Confirm',
-      cancel: 'Cancel',
-      modify: 'Modify',
-      loading: 'Loading…',
-      successSaved: 'Saved successfully',
+      confirm: 'Yuwayi',
+      cancel: 'Pata-pinyi',
+      modify: 'Karruly-wantimi',
+      loading: 'Wurra',
+      successSaved: 'Karruly-wantimi',
       required: 'Required',
       optional: 'Optional',
     },
@@ -213,9 +213,9 @@ export const messages = {
 
     info: {
       title: 'Fill in basic information',
-      gender: 'Gender',
-      male: 'Male',
-      female: 'Female',
+      gender: 'Kura',
+      male: 'Wirriya',
+      female: 'Ngama',
       age: 'Age',
       weight: 'Weight',
       conditions: 'Current situation',
