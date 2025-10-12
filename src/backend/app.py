@@ -3,6 +3,7 @@ import os, sys, time, tempfile
 import torch
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import datetime
 
 # Ensure we can import src.NLP_components.*
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -12,6 +13,8 @@ if ROOT not in sys.path:
 from NLP_components.MT_Inference import translate as mt_translate, info as mt_info
 from NLP_components.ASR_Inference import transcribe as asr_transcribe
 from NLP_components.entext_train import process_texts, bootstrap_pipeline
+
+from ML.LR import predict
 NLP = bootstrap_pipeline()  # returns an object holding nlp, matchers, dictionaries, etc.
 
 
@@ -156,5 +159,24 @@ def nlp_process():
         return jsonify({"results": results, "runtime_ms": ms})
     except Exception as e:
         return jsonify({"detail": f"Processing failed: {e}"}), 500
+
+@app.post("/predict")
+def predict_disease():
+    try:
+        data = request.get_json(force=True) or {}
+    except Exception:
+        return jsonify({"detail": "Invalid JSON"}), 400
+
+    text = data.get("symptoms")
+    print(text)
+    if not text:
+        return jsonify({"detail": "No sympyoms provided"}), 400
+
+    disease = predict(text)
+
+    return jsonify({
+        "jobId": datetime.datetime.now(),
+        "disease": disease
+    })
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)

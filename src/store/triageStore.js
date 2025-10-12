@@ -82,8 +82,8 @@ export const useTriageStore = defineStore('triage', {
           },
         }
 
-        const { jobId } = await api.submitSymptoms(payload, this.token)
-        const report = await api.fetchReport(jobId, this.token)
+        const { jobId, disease } = await api.submitSymptoms(payload, this.token)
+        const report = await api.fetchReport(jobId, disease)
         this.lastReport = report
 
         const item = { id: jobId, at: new Date().toISOString(), payload, report }

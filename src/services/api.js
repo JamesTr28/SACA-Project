@@ -93,8 +93,13 @@ export async function getMe(token) {
 
 /** ---------- Triage Submissions ---------- */
 export async function submitSymptoms(payload, token) {
-  // return await req('/triage/submit', { method:'POST', token, json: payload })
-  return new Promise((r)=> setTimeout(()=> r({ jobId: 'job_' + Date.now() }), 600))
+  const res = await fetch(`${BASE}/predict`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
+  return res.json();
 }
 
 export async function uploadAudio(blob, token) {
@@ -104,20 +109,25 @@ export async function uploadAudio(blob, token) {
   return new Promise((r)=> setTimeout(()=> r({ jobId: 'audio_' + Date.now(), note:'mocked' }), 500))
 }
 
-export async function fetchReport(jobId, token) {
-  // return await req(`/triage/report/${jobId}`, { token })
-  // 占位报告结构，和你的 ResultsPanel 对齐
+export async function fetchReport(jobId, disease) {
+  // return new Promise((r)=> setTimeout(()=> r({
+  //   jobId,
+  //   patient: { age: 31, gender: 'F' },
+  //   extractedSymptoms: [
+  //     { name: 'fever', weight: 0.86 },
+  //     { name: 'cough', weight: 0.63 },
+  //   ],
+  //   modelVotes: [
+  //     { model: 'LogReg', severity: 2, confidence: 0.71 },
+  //     { model: 'RandomForest', severity: 3, confidence: 0.64 },
+  //   ],
+  //   finalDecision: { severity: 3, rationale: 'Consistent with RF + high temp.' },
+  //   createdAt: new Date().toISOString()
+  // }), 800))
   return new Promise((r)=> setTimeout(()=> r({
     jobId,
+    disease: disease,
     patient: { age: 31, gender: 'F' },
-    extractedSymptoms: [
-      { name: 'fever', weight: 0.86 },
-      { name: 'cough', weight: 0.63 },
-    ],
-    modelVotes: [
-      { model: 'LogReg', severity: 2, confidence: 0.71 },
-      { model: 'RandomForest', severity: 3, confidence: 0.64 },
-    ],
     finalDecision: { severity: 3, rationale: 'Consistent with RF + high temp.' },
     createdAt: new Date().toISOString()
   }), 800))

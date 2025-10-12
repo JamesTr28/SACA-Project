@@ -29,5 +29,7 @@ def predict(input_symptoms: []):
 
     print("Predicted disease:", predicted_disease)
 
+    return predicted_disease
+
 if __name__ == "__main__":
     predict(['depression', 'shortness_of_breath']);
