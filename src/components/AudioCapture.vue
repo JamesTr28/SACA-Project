@@ -1,364 +1,173 @@
 <template>
-  <div class="audio">
-    <div class="row">
-      <button class="btn" :disabled="recording" @click="start">
-        ▶ Start recording
-      </button>
-      <button class="btn outline" :disabled="!recording" @click="stop">
-        ■ Stop
-      </button>
-      <!-- Add near your existing preview area -->
+  <div class="ac-root">
+    <div class="ac-controls">
+      <button class="btn primary" :disabled="recording || disabled" @click="start">▶ Start recording</button>
+      <button class="btn outline"  :disabled="!recording" @click="stop">■ Stop</button>
 
-      <span v-if="recording" class="rec">● recording {{ mm }}:{{ ss }}</span>
-      <span v-else-if="durationMs > 0" class="dur">⏱ {{ mm }}:{{ ss }}</span>
-    </div>
-    <div class="uploadWav">
-      <input
-        ref="fileInput"
-        type="file"
-        accept=".wav,audio/wav"
-        @change="onPickWav"
-        style="display: none"
-      />
-      <button class="btn outline" :disabled="asrLoading" @click="chooseWav">
-        ⤴ Upload .wav (demo)
-      </button>
-      <br />
-      <small class="meta">Select a local .wav file to transcribe</small>
-    </div>
-    <p v-if="err" class="err">{{ err }}</p>
-
-    <div v-if="url" class="preview">
-      <audio :src="url" controls></audio>
-      <button class="link" @click="reset">Re-record</button>
-      <small class="meta">~{{ prettySize }} • {{ mime }}</small>
+      <label class="btn outline file">
+        ↰ Upload .wav (demo)
+        <input type="file" accept=".wav,audio/wav" @change="onFile" hidden />
+      </label>
     </div>
 
-    <div v-if="asrLoading" class="asrStatus">Transcribing…</div>
-    <p v-if="asrError" class="err">{{ asrError }}</p>
-    <div v-if="asrText" class="asrOut">
-      <strong>Transcript</strong>
-      <pre>{{ asrText }}</pre>
+    <div class="ac-hint">
+      <span v-if="statusText">{{ statusText }}</span>
+      <span v-else-if="!recording">Select a local .wav file to transcribe</span>
+      <span v-else>Recording… {{ mm }}:{{ ss }}</span>
+    </div>
+
+    <div class="ac-progress" v-if="recording">
+      <div class="bar" :style="{ width: pct + '%' }"></div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onBeforeUnmount } from "vue";
-import { asrTranscribeFile } from "@/services/api"; // POST /asr/transcribe expects field 'audio' (.wav)
+import { ref, computed, onUnmounted } from 'vue'
+import { asrTranscribeFile } from '@/services/api'
 
+const emit = defineEmits(['recorded','transcript'])
 
-const emit = defineEmits(["recorded", "transcribed"]);
+const MAX_SEC = 30
+const MIN_SEC = 2
+const elapsedSec = ref(0)
+let timer = null
+const mm = computed(() => String(Math.floor(elapsedSec.value/60)).padStart(2,'0'))
+const ss = computed(() => String(elapsedSec.value%60).padStart(2,'0'))
+const pct = computed(() => Math.min(100, Math.round(elapsedSec.value*100/MAX_SEC)))
 
-const recording = ref(false);
-const err = ref("");
-const url = ref("");
-const mime = ref("audio/wav"); // final upload type is .wav
-const durationMs = ref(0);
-const sizeBytes = ref(0);
+const recording = ref(false)
 
-const asrLoading = ref(false);
-const asrText = ref("");
-const asrError = ref("");
+let audioCtx = null, sourceNode = null, processor = null, stream = null
+let chunks = []
+const TARGET_SR = 16000
 
-let mediaRec,
-  timer,
-  startedAt = 0;
-const chunks = [];
+async function start(){
+  if (recording.value) return
+  console.log('[AudioCapture] start: requesting mic')
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({ audio:true })
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: TARGET_SR })
+    console.log('[AudioCapture] using AudioContext sr=', audioCtx.sampleRate)
+    sourceNode = audioCtx.createMediaStreamSource(stream)
 
-const MAX_MS = 60_000;
-const MAX_BYTES = 25 * 1024 * 1024; // WAV is larger; cap at 25MB
+    // 兼容方案：ScriptProcessor（简单稳定），后续可换 AudioWorklet
+    processor = audioCtx.createScriptProcessor(4096, 1, 1)
+    processor.onaudioprocess = (e) => {
+      const ch0 = e.inputBuffer.getChannelData(0)
+      chunks.push(new Float32Array(ch0))
+    }
+    sourceNode.connect(processor)
+    processor.connect(audioCtx.destination)
 
-// --- Translation wiring ---
-const transLoading = ref(false);
-const transError = ref(null);
+    elapsedSec.value = 0
+    timer = setInterval(() => {
+      elapsedSec.value++
+      if (elapsedSec.value >= MAX_SEC) stop()
+    }, 1000)
 
-function tick() {
-  durationMs.value = Date.now() - startedAt;
-  if (durationMs.value >= MAX_MS) stop();
-}
-
-async function start() {
-  err.value = "";
-  asrError.value = "";
-  asrText.value = "";
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-    // We can record in whatever browser supports (usually webm/opus); we'll convert to WAV after stop.
-    const type = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-      ? "audio/webm;codecs=opus"
-      : MediaRecorder.isTypeSupported("audio/webm")
-      ? "audio/webm"
-      : "";
-    if (!type) throw new Error("This browser does not support WebM recording.");
-
-    mediaRec = new MediaRecorder(stream, { mimeType: type });
-
-    chunks.length = 0;
-    mediaRec.ondataavailable = (e) => {
-      if (e.data?.size) chunks.push(e.data);
-    };
-    mediaRec.onstop = async () => {
-      const rawBlob = new Blob(chunks, { type });
-      try {
-        const wavFile = await toWavFile(rawBlob); // convert to 16-bit PCM WAV
-        sizeBytes.value = wavFile.size;
-        mime.value = wavFile.type || "audio/wav";
-        url.value = URL.createObjectURL(wavFile);
-
-        if (wavFile.size > MAX_BYTES) {
-          err.value = "Audio too large (>25MB). Please record again.";
-          reset(false);
-          return;
-        }
-
-        emit("recorded", wavFile); // emit the WAV file upstream if needed
-        await transcribeWav(wavFile); // upload to backend
-      } catch (convErr) {
-        console.error(convErr);
-        err.value = "Failed to convert recording to WAV.";
-      }
-    };
-
-    mediaRec.start();
-    recording.value = true;
-    startedAt = Date.now();
-    durationMs.value = 0;
-    clearInterval(timer);
-    timer = setInterval(tick, 200);
-  } catch (e) {
-    err.value = e?.message || "Cannot access microphone";
+    recording.value = true
+  }catch(err){
+    console.error('[AudioCapture] mic init failed:', err)
   }
 }
 
-function stop() {
-  try {
-    mediaRec?.stop();
-  } catch {}
-  recording.value = false;
-  clearInterval(timer);
-  mediaRec?.stream?.getTracks()?.forEach((t) => t.stop());
+function stop(){
+  if (!recording.value) return
+  console.log('[AudioCapture] stop')
+  try{
+    sourceNode && sourceNode.disconnect()
+    processor && processor.disconnect()
+    stream?.getTracks()?.forEach(t=>t.stop())
+    audioCtx && audioCtx.close()
+  }catch(e){}
+  clearInterval(timer)
+  recording.value = false
+
+  if (elapsedSec.value < MIN_SEC || chunks.length === 0) {
+    console.warn('[AudioCapture] recording too short:', elapsedSec.value, 's; discard.')
+    chunks = []
+    return
+  }
+
+  const pcm = mergeFloat32(chunks)
+  const wav = toWav(pcm, TARGET_SR)
+  console.log('[AudioCapture] wav ready. size=', wav.size)
+  chunks = []
+  emit('recorded', wav)
+  transcribe(wav) // 这里一定会调到 api.asrTranscribeFile
 }
 
-function reset(clearEvent = true) {
-  try {
-    URL.revokeObjectURL(url.value);
-  } catch {}
-  url.value = "";
-  sizeBytes.value = 0;
-  durationMs.value = 0;
-  asrText.value = "";
-  asrError.value = "";
-  if (clearEvent) emit("recorded", null);
+async function onFile(e){
+  const f = e.target.files?.[0]
+  if (!f) return
+  console.log('[AudioCapture] upload file:', f.name, f.type, f.size)
+  emit('recorded', f)
+  await transcribe(f)
+  e.target.value = ''
 }
 
-async function transcribeWav(wavFile) {
-  asrLoading.value = true;
-  asrError.value = "";
-  asrText.value = "";
-  try {
-    const r = await asrTranscribeFile(wavFile); // server sees .wav only
-    asrText.value = `${r.text}\n\n(${r.runtime_ms} ms on ${r.device})`;
-  } catch (e) {
-    asrError.value = e?.message || "Transcription failed";
-  } finally {
-    asrLoading.value = false;
+async function transcribe(blob){
+  try{
+    console.log('[AudioCapture] transcribe()…')
+    const res = await asrTranscribeFile(blob)
+    const text = (res?.text || '').trim()
+    console.log('[AudioCapture] transcribe <-', text)
+    if (text) emit('transcript', text)
+  }catch(err){
+    console.error('[AudioCapture] transcribe failed:', err)
   }
 }
 
-/**
- * Convert an arbitrary audio Blob (e.g., webm/opus) to a 16-bit PCM WAV File.
- * - Uses Web Audio API to decode to an AudioBuffer, then encodes WAV manually.
- * - Output sample rate: original buffer.sampleRate (commonly 48k); ASR backend will resample to 16k.
- */
-async function toWavFile(inputBlob) {
-  const arrayBuf = await inputBlob.arrayBuffer();
+onUnmounted(() => {
+  try{ stream?.getTracks()?.forEach(t=>t.stop()) }catch(_){}
+})
 
-  // Decode with Web Audio API
-  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const audioBuf = await audioCtx.decodeAudioData(arrayBuf.slice(0));
-
-  // Mixdown to mono Float32
-  const numCh = audioBuf.numberOfChannels;
-  const len = audioBuf.length;
-  const sampleRate = audioBuf.sampleRate;
-  const tmp = new Float32Array(len);
-  for (let ch = 0; ch < numCh; ch++) {
-    tmp.set(audioBuf.getChannelData(ch), 0);
-    if (ch === 0) continue;
-    const chData = audioBuf.getChannelData(ch);
-    for (let i = 0; i < len; i++) tmp[i] = (tmp[i] * ch + chData[i]) / (ch + 1);
-  }
-
-  const wavBuffer = encodeWavPCM16(tmp, sampleRate); // ArrayBuffer
-  const wavBlob = new Blob([wavBuffer], { type: "audio/wav" });
-  return new File([wavBlob], "recording.wav", { type: "audio/wav" });
+function mergeFloat32(arrs){
+  let len = 0; for (const a of arrs) len += a.length
+  const out = new Float32Array(len)
+  let off = 0
+  for (const a of arrs){ out.set(a, off); off += a.length }
+  return out
 }
-
-/**
- * Encode Float32 PCM [-1,1] mono into 16-bit PCM WAV (little-endian).
- */
-function encodeWavPCM16(float32Mono, sampleRate) {
-  const numChannels = 1;
-  const bytesPerSample = 2;
-  const blockAlign = numChannels * bytesPerSample;
-  const byteRate = sampleRate * blockAlign;
-  const dataLen = float32Mono.length * bytesPerSample;
-  const buffer = new ArrayBuffer(44 + dataLen);
-  const view = new DataView(buffer);
-
-  // RIFF header
-  writeString(view, 0, "RIFF");
-  view.setUint32(4, 36 + dataLen, true);
-  writeString(view, 8, "WAVE");
-
-  // fmt  subchunk
-  writeString(view, 12, "fmt ");
-  view.setUint32(16, 16, true); // Subchunk1Size (16 for PCM)
-  view.setUint16(20, 1, true); // AudioFormat (1 = PCM)
-  view.setUint16(22, numChannels, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, byteRate, true);
-  view.setUint16(32, blockAlign, true);
-  view.setUint16(34, 16, true); // BitsPerSample
-
-  // data subchunk
-  writeString(view, 36, "data");
-  view.setUint32(40, dataLen, true);
-
-  // PCM samples
-  let offset = 44;
-  for (let i = 0; i < float32Mono.length; i++, offset += 2) {
-    let s = Math.max(-1, Math.min(1, float32Mono[i]));
-    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
-  }
-  return buffer;
+function toWav(float32, rate){
+  const bytesPerSample = 2, numCh = 1, blockAlign = numCh*bytesPerSample
+  const buffer = new ArrayBuffer(44 + float32.length*bytesPerSample)
+  const view = new DataView(buffer)
+  writeStr(view,0,'RIFF'); view.setUint32(4,36+float32.length*bytesPerSample,true)
+  writeStr(view,8,'WAVE'); writeStr(view,12,'fmt ')
+  view.setUint32(16,16,true); view.setUint16(20,1,true)
+  view.setUint16(22,numCh,true); view.setUint32(24,rate,true)
+  view.setUint32(28,rate*blockAlign,true); view.setUint16(32,blockAlign,true)
+  view.setUint16(34,16,true); writeStr(view,36,'data')
+  view.setUint32(40,float32.length*bytesPerSample,true)
+  floatTo16(view,44,float32)
+  return new Blob([view],{type:'audio/wav'})
 }
-
-function writeString(view, offset, str) {
-  for (let i = 0; i < str.length; i++)
-    view.setUint8(offset + i, str.charCodeAt(i));
-}
-
-onBeforeUnmount(() => {
-  try {
-    mediaRec?.stop();
-  } catch {}
-  mediaRec?.stream?.getTracks()?.forEach((t) => t.stop());
-  clearInterval(timer);
-});
-
-const prettySize = computed(() => {
-  if (!sizeBytes.value) return "";
-  const mb = sizeBytes.value / (1024 * 1024);
-  return mb >= 1 ? `${mb.toFixed(2)} MB` : `${(mb * 1024).toFixed(0)} KB`;
-});
-const mm = computed(() =>
-  String(Math.floor(durationMs.value / 60000)).padStart(2, "0")
-);
-const ss = computed(() =>
-  String(Math.floor((durationMs.value % 60000) / 1000)).padStart(2, "0")
-);
-const fileInput = ref(null);
-
-function chooseWav() {
-  asrError.value = "";
-  asrText.value = "";
-  fileInput.value?.click();
-}
-
-async function onPickWav(e) {
-  const file = e.target.files?.[0];
-  if (!file) return;
-  // Strict .wav checks: extension + mime (mime can be inconsistent across OS/browsers, so check both)
-  const nameOk = file.name.toLowerCase().endsWith(".wav");
-  const typeOk =
-    (file.type || "").toLowerCase() === "audio/wav" ||
-    (file.type || "").toLowerCase() === "audio/x-wav";
-  if (!nameOk && !typeOk) {
-    asrError.value = "Please select a .wav file.";
-    e.target.value = "";
-    return;
-  }
-  if (file.size > MAX_BYTES) {
-    asrError.value = "WAV too large (>25MB).";
-    e.target.value = "";
-    return;
-  }
-
-  asrLoading.value = true;
-  try {
-    const r = await asrTranscribeFile(file);
-    asrText.value = `${r.text}\n\n(${r.runtime_ms} ms on ${r.device})`;
-    emit("transcribed", r.text); // or asrText.value if you prefer
-  } catch (err) {
-    asrError.value = err?.message || "Transcription failed";
-  } finally {
-    asrLoading.value = false;
-    // reset input so selecting the same file again re-triggers change
-    e.target.value = "";
+function writeStr(v,o,s){ for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)) }
+function floatTo16(v,o,inp){
+  for(let i=0;i<inp.length;i++,o+=2){
+    let s = Math.max(-1, Math.min(1, inp[i]))
+    v.setInt16(o, s<0 ? s*0x8000 : s*0x7FFF, true)
   }
 }
 </script>
 
+
 <style scoped>
-.audio {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.ac-root{
+  width:100%;
+  display:flex; align-items:center; gap:12px;
+  border:2px solid #cfe6cf; border-radius:12px; background:#fff; padding:12px;
+  box-shadow:0 2px 8px rgba(0,0,0,.04) inset; flex-wrap:wrap;
 }
-.row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-.btn {
-  padding: 6px 12px;
-  border-radius: 10px;
-  background: #111;
-  color: #fff;
-}
-.btn.outline {
-  background: #fff;
-  color: #111;
-  border: 1px solid #111;
-}
-.rec {
-  color: #c0392b;
-  font-weight: 600;
-}
-.dur {
-  color: #555;
-}
-.err {
-  color: #c0392b;
-  margin: 4px 0;
-}
-.preview {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-.link {
-  background: none;
-  border: none;
-  padding: 0;
-  color: #2563eb;
-  cursor: pointer;
-}
-.meta {
-  color: #777;
-}
-.asrStatus {
-  color: #555;
-}
-.asrOut pre {
-  white-space: pre-wrap;
-  background: #f7f7f7;
-  padding: 8px;
-  border-radius: 8px;
-}
+.ac-controls{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.ac-hint{ margin-left:auto; color:#555; font-size:.9em; white-space:nowrap; min-height:1em; }
+.ac-progress{ width:100%; height:8px; border-radius:999px; background:#eaf6ea; overflow:hidden; }
+.ac-progress .bar{ height:100%; background:#2e7d32; opacity:.85; transition:width .2s ease; }
+.btn{ padding:10px 14px; border-radius:12px; cursor:pointer; }
+.btn.primary{ background:linear-gradient(135deg,#2e7d32,#1f5f24); color:#fff; border:1px solid #215b2b; }
+.btn.outline{ background:#fff; color:#2e7d32; border:2px solid #2e7d32; }
+.btn:disabled{ opacity:.6; cursor:not-allowed; }
+.file{ display:inline-flex; align-items:center; gap:6px; }
 </style>

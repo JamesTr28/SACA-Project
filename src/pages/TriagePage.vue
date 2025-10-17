@@ -23,7 +23,7 @@
             </button>
           </div>
 
-          <!-- 性别二选一（禁用自由输入） -->
+          <!-- 性别二选一 -->
           <div v-if="m.type==='gender'" class="opts">
             <button class="btn outline opt" @click="selectGender(1)">Male</button>
             <button class="btn outline opt" @click="selectGender(0)">Female</button>
@@ -42,19 +42,36 @@
 
     <!-- 输入区：有选项/性别/图片时禁用自由输入 -->
     <div class="composer">
-      <input
-        v-model="draft"
-        type="text"
-        class="input"
-        :placeholder="placeholder"
-        :disabled="inputDisabled || busy"
-        @keyup.enter="send"
-      />
-      <button class="btn primary send" :disabled="inputDisabled || busy" @click="send">Send</button>
+      <!-- ① 文本输入 + Send -->
+      <div class="row input-row">
+        <input
+          v-model="draft"
+          type="text"
+          class="input"
+          :placeholder="placeholder"
+          :disabled="inputDisabled || busy"
+          @keyup.enter="send"
+        />
+        <button class="btn primary send" :disabled="inputDisabled || busy" @click="send">Send</button>
+      </div>
 
-      <!-- 仅在症状阶段展示语音 -->
-      <AudioCapture v-if="stage==='symptoms' && !inputDisabled" :disabled="busy" @recorded="onAudioRecorded" />
-      <button class="btn outline skip" :disabled="busy" @click="skip">{{ skipText }}</button>
+      <!-- ② 录音盒子 -->
+      <div
+        v-if="stage==='symptoms' && !inputDisabled"
+        class="voice-box"
+        aria-label="Voice input panel"
+      >
+        <AudioCapture
+          :disabled="busy"
+          @transcript="onTranscript"
+          @recorded="onAudioRecorded"
+        />
+      </div>
+
+      <!-- ③ Skip/Next -->
+      <div class="row actions-row">
+        <button class="btn outline skip" :disabled="busy" @click="skip">{{ skipText }}</button>
+      </div>
     </div>
   </section>
 </template>
@@ -66,37 +83,49 @@ import { useTriageStore } from '@/store/triageStore'
 import { translate, nlpProcessTexts, asrTranscribeFile } from '@/services/api'
 import SymptomImagePicker from '@/components/SymptomImagePicker.vue'
 import AudioCapture from '@/components/AudioCapture.vue'
+import { useI18n } from '@/i18n'
 
 const router = useRouter()
 const store  = useTriageStore()
 const busy   = ref(false)
 
-/* ---------- 语言切换（保存到 localStorage） ---------- */
-const lang = ref(localStorage.getItem('locale') || 'en')
-function setLang(l){ lang.value = l; localStorage.setItem('locale', l) }
+const { t, lang, setLang } = useI18n()
 
 /* ---------- 会话与阶段 ---------- */
-const chat   = ref([])            // { role:'bot'|'user', text, options?, type? }
+const chat   = ref([])            // { role:'bot'|'user', text, _orig?, options?, type? }
 const draft  = ref('')
-const stage  = ref('greet')       // 'greet'|'collect_gender'|'collect_age'|'collect_weight'|'collect_cond'|'collect_allergy'|'collect_meds'|'symptoms'|'ask_more'|'image_flow'
-const optionMode = ref(false)     // 显示选项/专用控件时禁用输入
+const stage  = ref('greet')       // 'greet'|'collect_*'|'symptoms'|'ask_more'|'image_flow'
+const optionMode = ref(false)
 const imagesTmp = ref([])
 
-function toLines(t){ return String(t).split('\n') }
-function pushBot(text, options=null, type=null){
-  optionMode.value = !!(options && options.length) || !!type
-  chat.value.push({ role:'bot', text, options, type })
-  scroll()
-}
-function pushUser(text){ chat.value.push({ role:'user', text }); scroll() }
-async function scroll(){ await nextTick(); const el=document.querySelector('.chat'); if(el) el.scrollTop=el.scrollHeight }
+function toLines(tk){ return String(tk).split('\n') }
 
-/* 初始问候：放到 onMounted，避免热更新重复注入 */
-onMounted(() => {
+/** pushBot：WEP 模式展示翻译；记录 _orig 供切换回 EN */
+async function pushBot(text, options=null, type=null){
+  optionMode.value = !!(options && options.length) || !!type
+  let shown = text
+
+  // 仅当 wep 且不是控件气泡时，尝试翻译 UI 固定文案
+  if (lang.value === 'wep' && text && !type) {
+    try {
+      const r = await translate(text) // 后端：translate(text) → { translation }
+      shown = r?.translation || r?.text || text
+    } catch { /* ignore */ }
+  }
+
+  chat.value.push({ role:'bot', text: shown, _orig: text, options, type })
+  await nextTick()
+  const el = document.querySelector('.chat')
+  if (el) el.scrollTop = el.scrollHeight
+}
+function pushUser(text){ chat.value.push({ role:'user', text }) }
+
+/* 初始问候（防止热更新重复） */
+onMounted(async () => {
   if (chat.value.length === 0) {
-    pushBot("Hi, I'm your assistant. How would you like to describe your issue?", [
-      { key:'text',  label:'Text NLP' },
-      { key:'image', label:'Image selection' }
+    await pushBot(t('chat.greet'), [
+      { key:'text',  label: t('mode.text') },
+      { key:'image', label: t('mode.image') }
     ])
   }
 })
@@ -104,9 +133,7 @@ onMounted(() => {
 /* ---------- store 兜底工具 ---------- */
 function safeSetProfileField(key, value){
   if (typeof store.setProfileField === 'function') store.setProfileField(key, value)
-  else {
-    store.profile = { ...(store.profile||{}), [key]: value }
-  }
+  else { store.profile = { ...(store.profile||{}), [key]: value } }
 }
 function safeSetSelectedSymptoms(arr){
   const dedup = Array.from(new Set(arr||[]))
@@ -126,27 +153,27 @@ function onOption(opt){
   if (stage.value==='greet' || stage.value==='greet_done') {
     if (opt.key === 'text') {
       stage.value = 'collect_gender'
-      pushBot('Please select your gender.', null, 'gender')
+      pushBot(t('chat.askGender'), null, 'gender')
     } else {
       stage.value = 'image_flow'
-      pushBot('Please select symptom images (multi-select).', null, 'images')
+      pushBot(t('chat.imagesPrompt'), null, 'images')
     }
     return
   }
 
   if (stage.value==='ask_more') {
     if (opt.key === 'no') router.push('/confirm')
-    else { stage.value='symptoms'; pushBot('Please describe additional symptoms (text or voice).') }
+    else { stage.value='symptoms'; pushBot(t('chat.askSymptoms')) }
   }
 }
 
 /* ---------- 性别专用选项 ---------- */
 function selectGender(code){
   optionMode.value = false
-  pushUser(code === 1 ? 'Male' : 'Female')
+  pushUser(code === 1 ? t('info.male') : t('info.female'))
   safeSetProfileField('gender', code)
   stage.value = 'collect_age'
-  pushBot('Your age? (years)')
+  pushBot(t('chat.askAge'))
 }
 
 /* ---------- 图片路径确认 ---------- */
@@ -158,27 +185,25 @@ function confirmImages(){
 /* ---------- 输入框联动 ---------- */
 const inputDisabled = computed(()=> optionMode.value)
 const placeholder = computed(()=>{
-  if (inputDisabled.value) return 'Please choose from options above'
+  if (inputDisabled.value) return t('chat.chooseFromOptions')
   switch(stage.value){
-    case 'collect_age': return 'Enter your age (e.g., 32)'
-    case 'collect_weight': return 'Enter your weight (kg)'
-    case 'collect_cond': return 'Any past medical conditions?'
-    case 'collect_allergy': return 'Any allergies?'
-    case 'collect_meds': return 'Current medications?'
-    case 'symptoms': return lang.value==='wbp'
-      ? 'Type in Warlpiri or English… (voice supported)'
-      : 'Please describe your symptoms… (voice supported)'
-    default: return 'Type here…'
+    case 'collect_age':     return t('chat.askAge')
+    case 'collect_weight':  return t('chat.askWeight')
+    case 'collect_cond':    return t('chat.askCond')
+    case 'collect_allergy': return t('chat.askAllergy')
+    case 'collect_meds':    return t('chat.askMeds')
+    case 'symptoms':        return t('chat.enPh')
+    default:                return t('chat.typeHere')
   }
 })
-const skipText = computed(()=> stage.value==='symptoms' ? 'Skip' : 'Next')
+const skipText = computed(()=> stage.value==='symptoms' ? t('common.skip') : t('common.next'))
 
-/* ---------- NLP & 翻译封装（保留语言切换） ---------- */
+/* ---------- NLP & 翻译封装 ---------- */
 async function translateToEnglishIfNeeded(text){
   if (!text) return ''
-  if (lang.value !== 'wbp') return text
+  if (lang.value !== 'wep') return text
   try{
-    const res = await translate(text)   // Warlpiri -> English
+    const res = await translate(text)   // 后端 translate(text) 默认 Warlpiri→English
     return res?.translation || res?.text || text
   }catch{ return text }
 }
@@ -231,40 +256,40 @@ async function send(){
 
   if (stage.value==='collect_age') {
     safeSetProfileField('age', text)
-    stage.value='collect_weight'; return pushBot('Your weight? (kg)')
+    stage.value='collect_weight'; return pushBot(t('chat.askWeight'))
   }
   if (stage.value==='collect_weight') {
     safeSetProfileField('weight', text)
-    stage.value='collect_cond'; return pushBot('Any past medical conditions?')
+    stage.value='collect_cond'; return pushBot(t('chat.askCond'))
   }
   if (stage.value==='collect_cond') {
     safeSetProfileField('conditions', text)
-    stage.value='collect_allergy'; return pushBot('Any allergies?')
+    stage.value='collect_allergy'; return pushBot(t('chat.askAllergy'))
   }
   if (stage.value==='collect_allergy') {
     safeSetProfileField('allergies', text)
-    stage.value='collect_meds'; return pushBot('Any current medications?')
+    stage.value='collect_meds'; return pushBot(t('chat.askMeds'))
   }
   if (stage.value==='collect_meds') {
     safeSetProfileField('medications', text)
-    stage.value='symptoms'; return pushBot('Thanks. Now please describe your symptoms (text or voice).')
+    stage.value='symptoms'; return pushBot(t('chat.askSymptoms'))
   }
 
   if (stage.value==='symptoms') {
     busy.value = true
     try{
-      const forNlp = await translateToEnglishIfNeeded(text)
+      const forNlp = await translateToEnglishIfNeeded(text) // wep→en
       const found  = await safeNlp(forNlp)
-      if (lang.value==='wbp' && forNlp !== text) pushBot(`Translated: ${forNlp}`)
+      if (lang.value==='wep' && forNlp !== text) pushBot(`${t('chat.translatedPrefix')} ${forNlp}`)
       if (found.length){
         safeAddSymptoms(found)
-        pushBot(`Got it. I captured: ${found.map(labelOf).join(', ')}.`)
+        pushBot(`${t('chat.capturedPrefix')}${found.map(labelOf).join(', ')}.`)
       }else{
-        pushBot('Thanks. I did not detect specific symptom keywords.')
+        pushBot(t('chat.noDetect'))
       }
       stage.value='ask_more'
-      pushBot('Do you want to add more info?', [
-        { key:'yes', label:'Yes' }, { key:'no', label:'No' }
+      pushBot(t('chat.askMore'), [
+        { key:'yes', label:t('chat.yes') }, { key:'no', label:t('chat.no') }
       ])
     } finally { busy.value = false }
   }
@@ -275,36 +300,39 @@ function skip(){
   if (stage.value==='symptoms') {
     router.push('/confirm')
   } else {
-    if (stage.value==='collect_age'){ stage.value='collect_weight'; pushBot('Your weight? (kg)'); return }
-    if (stage.value==='collect_weight'){ stage.value='collect_cond'; pushBot('Any past medical conditions?'); return }
-    if (stage.value==='collect_cond'){ stage.value='collect_allergy'; pushBot('Any allergies?'); return }
-    if (stage.value==='collect_allergy'){ stage.value='collect_meds'; pushBot('Any current medications?'); return }
-    if (stage.value==='collect_meds'){ stage.value='symptoms'; pushBot('Please describe your symptoms (text or voice).'); return }
+    if (stage.value==='collect_age'){ stage.value='collect_weight'; pushBot(t('chat.askWeight')); return }
+    if (stage.value==='collect_weight'){ stage.value='collect_cond'; pushBot(t('chat.askCond')); return }
+    if (stage.value==='collect_cond'){ stage.value='collect_allergy'; pushBot(t('chat.askAllergy')); return }
+    if (stage.value==='collect_allergy'){ stage.value='collect_meds'; pushBot(t('chat.askMeds')); return }
+    if (stage.value==='collect_meds'){ stage.value='symptoms'; pushBot(t('chat.askSymptoms')); return }
   }
 }
 
-/* ---------- 语音（ASR→可选翻译→NLP） ---------- */
+/* ---------- 语音事件 ---------- */
 async function onAudioRecorded(blob){
-  if (busy.value) return
-  busy.value = true
+  // 如果仍需在父组件内直接调用 asr，可保留；你也可以只监听子组件 @transcript
   try{
-    const out = await asrTranscribeFile(blob) // { text }
+    const out = await asrTranscribeFile(blob)
     const raw = out?.text || ''
-    if (!raw) { pushBot('Audio transcription failed.'); return }
+    if (!raw) return
     pushUser(`[Voice] ${raw}`)
-
     const forNlp = await translateToEnglishIfNeeded(raw)
-    if (lang.value==='wbp' && forNlp !== raw) pushBot(`Translated: ${forNlp}`)
+    if (lang.value==='wep' && forNlp !== raw) pushBot(`${t('chat.translatedPrefix')} ${forNlp}`)
     const found = await safeNlp(forNlp)
     if (found.length){
       safeAddSymptoms(found)
-      pushBot(`Got it. I captured: ${found.map(labelOf).join(', ')}.`)
+      pushBot(`${t('chat.capturedPrefix')}${found.map(labelOf).join(', ')}.`)
     }
     stage.value='ask_more'
-    pushBot('Do you want to add more info?', [
-      { key:'yes', label:'Yes' }, { key:'no', label:'No' }
+    pushBot(t('chat.askMore'), [
+      { key:'yes', label:t('chat.yes') }, { key:'no', label:t('chat.no') }
     ])
-  } finally { busy.value=false }
+  }catch{}
+}
+function onTranscript(text){
+  const s = (text||'').trim()
+  if (!s) return
+  draft.value = draft.value ? `${draft.value} ${s}` : s
 }
 
 /* 标签名展示 */
@@ -315,6 +343,7 @@ const keyToLabel = {
 }
 function labelOf(k){ return keyToLabel[k] || k }
 </script>
+
 
 <style scoped>
 /* 布局 */
@@ -329,7 +358,7 @@ function labelOf(k){ return keyToLabel[k] || k }
 .card.chat{
   border:1px solid #cfe6cf;
   border-radius:16px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.579), rgba(245,255,245,.86));
+  background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(245,255,245,.86));
   box-shadow: inset 0 6px 18px rgba(0,0,0,.06);
   padding:12px; height:420px; overflow:auto;
 }
@@ -357,8 +386,21 @@ function labelOf(k){ return keyToLabel[k] || k }
 /* 图片区域微分隔 */
 .images{margin-top:8px}
 
-/* 输入区 */
-.composer{display:flex;gap:10px;align-items:center;margin-top:12px}
+/* ===== 输入区（重构为三行：输入/录音盒子/Skip） ===== */
+.composer{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-top:12px;
+}
+.row{width:100%}
+
+/* ① 文本输入 + Send（横排） */
+.input-row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
 .input{
   flex:1; padding:10px 12px;
   border:2px solid #cfe6cf; border-radius:12px;
@@ -371,7 +413,7 @@ function labelOf(k){ return keyToLabel[k] || k }
 }
 .input:disabled{opacity:.6}
 
-/* 按钮（更清晰的对比） */
+/* Send 更醒目 */
 .btn{padding:10px 14px;border-radius:12px;cursor:pointer}
 .btn.primary.send{
   background: linear-gradient(135deg, #2e7d32, #1f5f24);
@@ -379,10 +421,69 @@ function labelOf(k){ return keyToLabel[k] || k }
   box-shadow:0 4px 10px rgba(33,91,43,.18);
 }
 .btn.primary.send:hover{ transform:translateY(-1px); box-shadow:0 6px 14px rgba(33,91,43,.25) }
+
+/* ② 录音盒子：三个按钮横排，Upload 靠右，右侧提示文字 */
+.voice-box {
+  width: 100%;
+  border: 2px solid #cfe6cf;
+  border-radius: 12px;
+  background: #ffffff2e;
+  padding: 10px 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) inset;
+
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* 深度定制 AudioCapture 内部结构 */
+.voice-box :deep(.ac-root) {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+}
+.voice-box :deep(.ac-controls) {
+  display: flex;
+  flex: 1;
+  gap: 10px;
+  align-items: center;
+}
+/* Start + Stop 靠左，Upload 靠右 */
+.voice-box :deep(.ac-controls .btn:nth-child(1)),
+.voice-box :deep(.ac-controls .btn:nth-child(2)) {
+  flex: 0 0 auto;
+}
+.voice-box :deep(.ac-controls .btn:nth-child(3)) {
+  margin-left: auto;
+}
+/* 提示文字在 Upload 右侧 */
+.voice-box :deep(.ac-hint) {
+  margin-left: 12px;
+  text-align: right;
+  font-size: 0.9em;
+  color: #555;
+  white-space: nowrap;
+}
+/* 小屏幕下竖排 */
+@media (max-width: 680px){
+  .voice-box :deep(.ac-root){ flex-direction: column; align-items: stretch; }
+  .voice-box :deep(.ac-controls){ flex-direction: column; align-items: stretch; }
+  .voice-box :deep(.ac-controls .btn:nth-child(3)){ margin-left: 0; }
+  .voice-box :deep(.ac-hint){ text-align: center; margin-left: 0; white-space: normal; }
+}
+
+/* ③ Skip/Next 独占一行，靠右 */
+.actions-row{
+  display:flex;
+  justify-content:flex-end;
+}
 .btn.outline.skip{
-  background:#fff; color:#2e7d32; border:2px solid #2e7d32;
+  background:#ffffff96; color:#2e7d32; border:2px solid #2e7d32;
   box-shadow:0 2px 8px rgba(0,0,0,.05);
 }
 .btn.outline.skip:hover{ background:#e9f7ea }
+
 .actions{margin-top:8px}
 </style>

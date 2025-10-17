@@ -130,7 +130,6 @@ const messages = {
       copied: 'Copied!',
     },
 
-    // 1–10 labels
     scales: {
       severity: [
         '1 Minimal: barely affects daily life',
@@ -175,11 +174,36 @@ const messages = {
       fatigue: 'Fatigue',
       suggestions: 'Suggestions from report',
     },
+
+    /* ---------- NEW: mode + chat 文案 ---------- */
+    mode: {
+      text: 'Text NLP',
+      image: 'Image selection',
+    },
+    chat: {
+      greet: "Hi, I'm your assistant. How would you like to describe your issue?",
+      askGender: 'Please select your gender.',
+      askAge: 'Your age? (years)',
+      askWeight: 'Your weight? (kg)',
+      askCond: 'Any past medical conditions?',
+      askAllergy: 'Any allergies?',
+      askMeds: 'Any current medications?',
+      askSymptoms: 'Thanks. Now please describe your symptoms (text or voice).',
+      translatedPrefix: 'Translated:',
+      noDetect: 'Thanks. I did not detect specific symptom keywords.',
+      capturedPrefix: 'Got it. I captured: ',
+      askMore: 'Do you want to add more info?',
+      yes: 'Yes',
+      no: 'No',
+      imagesPrompt: 'Please select symptom images (multi-select).',
+      chooseFromOptions: 'Please choose from options above',
+      typeHere: 'Type here…',
+      wbpPh: 'Type in Warlpiri or English… (voice supported)',
+      enPh: 'Please describe your symptoms… (voice supported)',
+    },
   },
 
-  
   wep: {
-
     brand: 'Intelligent Triage',
     nav: { home: 'Nguru', history: 'Nyurru-warnu', profile: 'Profile' },
     footer: { demo: 'Triage Demo' },
@@ -309,7 +333,6 @@ const messages = {
       copied: 'Copied!',
     },
 
-    // 1–10 labels
     scales: {
       severity: [
         '1 Minimal: barely affects daily life',
@@ -353,6 +376,33 @@ const messages = {
       rash: 'Rash',
       fatigue: 'Fatigue',
       suggestions: 'Suggestions from report',
+    },
+
+    /* NEW */
+    mode: {
+      text: 'Text NLP',
+      image: 'Image selection',
+    },
+    chat: {
+      greet: "Hi, I'm your assistant. How would you like to describe your",
+      askGender: 'Please select your gender.',
+      askAge: 'Your age? (years)',
+      askWeight: 'Your weight? (kg)',
+      askCond: 'Any past medical conditions?',
+      askAllergy: 'Any allergies?',
+      askMeds: 'Any current medications?',
+      askSymptoms: 'Thanks. Now please describe your symptoms (text or voice).',
+      translatedPrefix: 'Translated:',
+      noDetect: 'Thanks. I did not detect specific symptom keywords.',
+      capturedPrefix: 'Got it. I captured: ',
+      askMore: 'Do you want to add more info?',
+      yes: 'Yes',
+      no: 'No',
+      imagesPrompt: 'Please select symptom images (multi-select).',
+      chooseFromOptions: 'Please choose from options above',
+      typeHere: 'Type here…',
+      wbpPh: 'Type in Warlpiri or English… (voice supported)',
+      enPh: 'Please describe your symptoms… (voice supported)',
     },
   },
 }
