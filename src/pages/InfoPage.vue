@@ -65,8 +65,8 @@ const genderOptions = computed(() => [
 ])
 
 function go(){
-  store.updateProfile({ ...form })
-  router.push('/triage')
+ // Change the destination to your chatbot page
+router.push('/chatbot');
 }
 </script>
 
