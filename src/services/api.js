@@ -1,0 +1,144 @@
+const BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
+
+async function req(path, { method='GET', token, json, form } = {}) {
+  const headers = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
+  let body
+  if (json) {
+    headers['Content-Type'] = 'application/json'
+    body = JSON.stringify(json)
+  } else if (form) {
+    body = form
+  }
+
+  const res = await fetch(`${BASE}${path}`, { method, headers, body })
+  if (!res.ok) {
+    const txt = await res.text().catch(()=>'')
+    throw new Error(`HTTP ${res.status} ${txt}`)
+  }
+  // 某些接口可能204
+  try { return await res.json() } catch { return {} }
+}
+// Audio inference
+export async function asrTranscribeFile(file) {
+  const fd = new FormData();
+  fd.append("audio", file); // field name must be 'audio'
+
+  const res = await fetch(`${BASE}/asr/transcribe`, {
+    method: "POST",
+    body: fd, // no Content-Type header; browser sets multipart boundary
+  });
+
+  if (!res.ok) {
+    const detail = await res.json().catch(() => ({}));
+    throw new Error(detail?.detail || `HTTP ${res.status}`);
+  }
+  return res.json(); // { text, runtime_ms, device }
+}
+// Symptom extraction from text
+// src/frontend/api.js
+export async function nlpProcessTexts(text) {
+  const res = await fetch(`${BASE}/nlp/process`, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },
+    body: text
+  });
+
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    throw new Error(`HTTP ${res.status} ${txt}`);
+  }
+
+  try {
+    return await res.json(); // { results: [...] }
+  } catch {
+    return {};
+  }
+}
+
+// Translate from Warlpiri to English
+
+export async function translate(text, beams = 6, maxLen = 160, lenPen = 1.0) {
+  const res = await fetch(`${BASE}/translate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, beams, max_len: maxLen, len_pen: lenPen }),
+  });
+  if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
+  return res.json();
+}
+/** ---------- Auth ---------- */
+export async function login(email, password) {
+  // 真实接口：return await req('/auth/login', { method:'POST', json:{email,password} })
+  // 占位：本地伪登录
+  return new Promise((r) => setTimeout(() => r({
+    token: 'demo-token',
+    user: { id: 'u1', email, name: email.split('@')[0] }
+  }), 400))
+}
+
+export async function register({ name, email, password }) {
+  // return await req('/auth/register', { method:'POST', json:{ name, email, password } })
+  return new Promise((r) => setTimeout(() => r({
+    token: 'demo-token',
+    user: { id: 'u2', email, name }
+  }), 500))
+}
+
+export async function getMe(token) {
+  // return await req('/auth/me', { token })
+  return { id: 'u1', email: 'demo@demo.com', name: 'Demo User' }
+}
+
+/** ---------- Triage Submissions ---------- */
+export async function submitSymptoms(payload, token) {
+  const res = await fetch(`${BASE}/predict`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
+  return res.json();
+}
+
+export async function uploadAudio(blob, token) {
+  const form = new FormData()
+  form.append('file', blob, 'speech.wav')
+  // return await req('/triage/audio', { method:'POST', token, form })
+  return new Promise((r)=> setTimeout(()=> r({ jobId: 'audio_' + Date.now(), note:'mocked' }), 500))
+}
+
+export async function fetchReport(jobId, disease) {
+  // return new Promise((r)=> setTimeout(()=> r({
+  //   jobId,
+  //   patient: { age: 31, gender: 'F' },
+  //   extractedSymptoms: [
+  //     { name: 'fever', weight: 0.86 },
+  //     { name: 'cough', weight: 0.63 },
+  //   ],
+  //   modelVotes: [
+  //     { model: 'LogReg', severity: 2, confidence: 0.71 },
+  //     { model: 'RandomForest', severity: 3, confidence: 0.64 },
+  //   ],
+  //   finalDecision: { severity: 3, rationale: 'Consistent with RF + high temp.' },
+  //   createdAt: new Date().toISOString()
+  // }), 800))
+  return new Promise((r)=> setTimeout(()=> r({
+    jobId,
+    disease: disease,
+    patient: { age: 31, gender: 'F' },
+    finalDecision: { severity: 3, rationale: 'Consistent with RF + high temp.' },
+    createdAt: new Date().toISOString()
+  }), 800))
+}
+
+import axios from 'axios'
+
+// If you added the Vite proxy, baseURL can be '' (same origin)
+const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '' })
+
+export async function translateText({ text, beams = 6, max_len = 160, len_pen = 1.0 }) {
+  const { data } = await api.post('/api/translate', { text, beams, max_len, len_pen })
+  return data.translation
+}
