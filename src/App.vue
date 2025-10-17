@@ -11,9 +11,10 @@
       </div>
 
       <nav class="links">
-        <RouterLink to="/" class="nav-btn">{{ t('nav.home') }}</RouterLink>
-        <RouterLink to="/profile" class="nav-btn outline">{{ t('nav.history') }}</RouterLink>
+        <RouterLink to="/triage"  class="nav-btn">Home</RouterLink>
+        <RouterLink to="/profile" class="nav-btn outline">History</RouterLink>
       </nav>
+
 
       <div class="right-tools">
         <!-- 语言切换 -->

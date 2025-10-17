@@ -1,37 +1,33 @@
+// src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
-import IntroPage from '@/pages/IntroPage.vue'
-import InfoPage from '@/pages/InfoPage.vue'
-import TriagePage from '@/pages/TriagePage.vue'
-import ConfirmPage from '@/pages/ConfirmPage.vue'
-import LoginPage from '@/pages/LoginPage.vue'
-import RegisterPage from '@/pages/RegisterPage.vue'
-import ProfilePage from '@/pages/ProfilePage.vue'
-import PredictionPage from '@/pages/PredictionPage.vue'   // ✅ ★ 必须加这一行 ★
-import { useTriageStore } from '@/store/triageStore'
 
-const routes = [
-  { path: '/', redirect: '/triage' },                     // ✅ 建议保留唯一根路由
-  { path: '/intro', name: 'intro', component: IntroPage },
-  { path: '/info', name: 'info', component: InfoPage },
-  { path: '/triage', name: 'triage', component: TriagePage },
-  { path: '/confirm', name: 'confirm', component: ConfirmPage },
-  { path: '/predict', name: 'predict', component: PredictionPage },  // ✅ 现在可以用了
-  { path: '/profile', name: 'profile', component: ProfilePage, meta: { requiresAuth: true } },
-  { path: '/login', name: 'login', component: LoginPage },
-  { path: '/register', name: 'register', component: RegisterPage },
-]
+// Pages
+import TriagePage     from '@/pages/TriagePage.vue'
+import ConfirmPage    from '@/pages/ConfirmPage.vue'
+import ProfilePage    from '@/pages/ProfilePage.vue'
+import LoginPage      from '@/pages/LoginPage.vue'
+import RegisterPage   from '@/pages/RegisterPage.vue'
+import PredictionPage from '@/pages/PredictionPage.vue' // ← 文件名要和你的实际文件一致
 
 const router = createRouter({
   history: createWebHistory(),
-  routes,
-})
+  routes: [
+    { path: '/', redirect: '/triage' },
 
-// 守卫逻辑：若目标需要登录且未认证，则跳转登录
-router.beforeEach((to) => {
-  const store = useTriageStore()
-  if (to.meta.requiresAuth && !store.isAuthenticated) {
-    return { name: 'login', query: { redirect: to.fullPath } }
-  }
+    { path: '/triage',  name: 'triage',  component: TriagePage },
+    { path: '/confirm', name: 'confirm', component: ConfirmPage },
+
+    // 结果页（如果暂时不用，可以注释掉下面这一行和上面的 import）
+    { path: '/predict', name: 'predict', component: PredictionPage },
+
+    { path: '/profile', name: 'profile', component: ProfilePage },
+
+    { path: '/login',    name: 'login',    component: LoginPage },
+    { path: '/register', name: 'register', component: RegisterPage },
+
+    // 兜底
+    { path: '/:pathMatch(.*)*', redirect: '/triage' },
+  ],
 })
 
 export default router
