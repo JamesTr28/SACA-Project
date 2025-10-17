@@ -79,10 +79,10 @@ import { chatFlow } from '../chat-data.js';
 import axios from 'axios';
 
 /* ---------- API URLs ---------- */
-const API_BASE   = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:5000';
-const VISION_URL = `${API_BASE}/api/vision/predict`;
-const NLP_URL    = `${API_BASE}/api/nlp/predict`;
-const ASR_URL    = `${API_BASE}/api/asr/transcribe`;
+const API_BASE   = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000';
+const VISION_URL = `${API_BASE}/vision/predict`;
+const NLP_URL    = `${API_BASE}/nlp/process`;
+const ASR_URL    = `${API_BASE}/asr/transcribe`;
 
 /* ---------- STATE ---------- */
 const router = useRouter();
@@ -170,25 +170,30 @@ const submitNLPText = async () => {
   addMessage(text || 'Skipped detailed description.', 'user');
   if (!text) return goToNextStep(currentQuestion.value.answers[0].nextId);
 
-  isTyping.value = true; error.value = '';
-  try {
-    const { data } = await axios.post(NLP_URL, { text });
-    const confPct = typeof data?.confidence === 'number' ? Math.round(data.confidence * 100) : null;
-    addMessage(`🩺 Assessment: ${data?.prediction || 'Unknown'}${confPct != null ? ` (${confPct}% confidence)` : ''}`, 'bot');
+  isTyping.value = true;
+  error.value = '';
 
-    // store for confirm page
-    collectedData.value.nlp_text       = text;
-    collectedData.value.nlp_assessment = data?.prediction || 'Unknown';
-    collectedData.value.nlp_confidence = confPct ?? null;
+  try {
+    const { data } = await axios.post(NLP_URL, text, {
+      headers: { 'Content-Type': 'text/plain' }
+    });
+
+    const results = data?.results || [];
+    const summary = results.length ? results.join(', ') : 'No findings';
+    addMessage(`🩺 NLP Results: ${summary}`, 'bot');
+
+    // Store for confirm page
+    collectedData.value.nlp_text = text;
+    collectedData.value.nlp_results = summary;
   } catch (e) {
-    const msg = e?.response?.data?.message || e?.message || 'NLP analysis failed.';
-    error.value = msg; addMessage(`❌ ${msg}`, 'bot');
+    const msg = e?.response?.data?.detail || e?.message || 'NLP analysis failed.';
+    error.value = msg;
+    addMessage(`❌ ${msg}`, 'bot');
   } finally {
     isTyping.value = false;
     goToNextStep(currentQuestion.value.answers[0].nextId);
   }
 };
-
 /* ---------- Symptom picker ---------- */
 const toggleSymptom = (symptomLabel) => {
   const i = selectedSymptoms.value.indexOf(symptomLabel);
@@ -259,7 +264,7 @@ onMounted(() => { addMessage(currentQuestion.value.text, 'bot'); });
 </script>
 
 <style scoped>
-.chatbot-container { width: 400px; max-width: 100%; border: 1px solid #e0e0e0; border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; font-family: sans-serif; margin: 20px auto; height: 70vh; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.chatbot-container { width: 600px; max-width: 100%; border: 1px solid #e0e0e0; border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; font-family: sans-serif; margin: 20px auto; height: 70vh; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 .messages-container { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
 .message { padding: 10px 15px; border-radius: 20px; max-width: 80%; word-wrap: break-word; line-height: 1.4; }
 .message.bot { background-color: #f1f0f0; align-self: flex-start; color: #333; }
