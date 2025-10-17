@@ -140,6 +140,7 @@ function finishConversation() {
   conversationEnded.value = true;
   store.updateProfile(collectedData.value);
   router.push('/confirm');
+  console.log('Collected Data:', collectedData.value);
 }
 
 /* ---------- CHOICES / TEXT ---------- */
