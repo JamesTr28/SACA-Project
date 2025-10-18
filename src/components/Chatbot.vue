@@ -51,11 +51,23 @@
 
       <!-- NLP text + microphone -->
       <template v-else-if="currentQuestion.type === 'nlp-input'">
+
         <textarea v-model="userInput" class="nlp-textarea" placeholder="Describe your symptoms here..."></textarea>
 
         <div style="display:flex; gap:8px; align-items:center; width:100%; justify-content:center;">
+
+          <!-- Handle file upload -->
+          <input
+            type="file"
+            ref="fileInput"
+            accept="audio/*"
+            style="display: none"
+            @change="handleFileSelect"
+          />
+
           <button class="next-button" v-if="!isRec" @click="startRec">🎙️ Start</button>
           <button class="next-button" v-else @click="stopRec">⏹ Stop</button>
+          <button class="next-button" @click="triggerUpload">Upload Video for demo</button>
           <span v-if="asrError" class="error-message" style="margin:0;">{{ asrError }}</span>
         </div>
 
@@ -94,6 +106,8 @@ const isTyping = ref(false);
 const conversationEnded = ref(false);
 const userInput = ref('');
 const error = ref('');
+const fileInput = ref(null);
+const asrResult = ref(null);
 const currentQuestion = ref(chatFlow[currentQuestionId.value]);
 const selectedSymptoms = ref([]);
 
@@ -229,9 +243,11 @@ const handleSkinUpload = async (event) => {
 };
 
 /* ---------- Microphone (ASR) ---------- */
+
 const isRec = ref(false);
 const asrError = ref('');
 let mediaRecorder; let chunks = [];
+
 
 const startRec = async () => {
   asrError.value = '';
@@ -244,6 +260,7 @@ const startRec = async () => {
     mediaRecorder.onstop = async () => {
       try {
         const blob = new Blob(chunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+        console.log("Blob type:", blob.type); // e.g., 'audio/webm'
         const fd = new FormData(); fd.append('audio', blob, 'recording.webm');
         const { data } = await axios.post(ASR_URL, fd);
         userInput.value = (userInput.value ? userInput.value + ' ' : '') + (data?.text || '');
@@ -258,6 +275,33 @@ const startRec = async () => {
   }
 };
 const stopRec = () => { if (mediaRecorder && isRec.value) { mediaRecorder.stop(); isRec.value = false; } };
+function triggerUpload() {
+  error.value = "";
+  asrResult.value = null;
+  fileInput.value?.click(); // opens file picker
+}
+
+
+
+async function handleFileSelect(event) {
+  console.log("File selected");
+  error.value = "";
+  const file = event.target.files[0];
+  console.log("Selected file:", file);
+  if (!file) return;
+
+  try {
+    const formData = new FormData();
+    formData.append('audio', file);
+    const { data: result } = await axios.post(ASR_URL, formData);
+    console.log("ASR Result:", result);
+  } catch (err) {
+    error.value = err.message;
+  } finally {
+    event.target.value = ""; // allow re-selecting same file
+  }
+}
+
 
 /* ---------- Boot ---------- */
 onMounted(() => { addMessage(currentQuestion.value.text, 'bot'); });
