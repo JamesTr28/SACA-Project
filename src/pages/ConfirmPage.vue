@@ -22,7 +22,7 @@
     <div class="card">
       <h3>{{ t("confirm.symptoms") }}</h3>
       <div v-if="profile.symptoms.length" >
-        <span>{{ profile.symptoms }}</span>
+        <span>{{ displayedSymptoms }} </span> <span>{{symptoms}}</span>
       </div>
       <div v-else class="muted">{{ t("confirm.noneSymptoms") }}</div>
     </div>
@@ -101,6 +101,10 @@ const { profile: storeProfile } = storeToRefs(store);
 
 const profile = computed(() => storeProfile.value || {});
 const symptoms = computed(() => store.selectedSymptoms || []);
+const displayedSymptoms =  symptoms.value.length
+  ? symptoms.value.join(", ")
+  : t("confirm.noneSymptoms");
+
 const text = computed(() => store.textInput || "");
 const audioBlob = computed(() => store.audioBlob || null);
 const sa = computed(() => store.selfAssessment || {});
@@ -117,13 +121,17 @@ async function submitSummary() {
   error.value = "";
   result.value = "";
   submitting.value = true;
+
   try {
-    const { data } = await axios.post(TRIAGE_URL, { profile: profile.value });
-    // render summary + next steps plainly
+    const { data } = await axios.post(TRIAGE_URL, { symptoms: symptoms.value }, {
+      headers: { "Content-Type": "application/json" },
+    });
+
     const next =
       data.next_steps && data.next_steps.length
         ? `\n\nNext steps:\n• ${data.next_steps.join("\n• ")}`
         : "";
+
     result.value = `${data.summary || ""}${next}`;
   } catch (e) {
     error.value =
@@ -134,6 +142,7 @@ async function submitSummary() {
     submitting.value = false;
   }
 }
+
 
 // symptom label mapping
 const { t: tt } = useI18n();
