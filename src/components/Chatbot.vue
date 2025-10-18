@@ -244,17 +244,21 @@ const submitNLPText = async () => {
     const results = data?.results || [];
     const summary = results.length ? results.join(", ") : "No findings";
     addMessage(`🩺 NLP Results: ${summary}`, "bot");
-
+    console.log("NLP Results:", results);
+    console.log("NLP Summary:", summary);
     // Store for confirm page
     collectedData.value.nlp_text += text;
     collectedData.value.nlp_results += summary;
+    for (const symptom of results) {
+      store.addSymptom(symptom);
+    }
+
     //Add each symptom to collectedData
 
     // if (!collectedData.value.symptoms) {
     //   collectedData.value.symptoms = [];
     // }
     // collectedData.value.symptoms += results;
-
   } catch (e) {
     const msg =
       e?.response?.data?.detail || e?.message || "NLP analysis failed.";
@@ -275,6 +279,7 @@ const submitSymptoms = () => {
   const txt = selectedSymptoms.value.length
     ? selectedSymptoms.value.join(", ")
     : "No symptoms selected.";
+  selectedSymptoms.value.forEach((symptom) => store.addSymptom(symptom));
   addMessage(txt, "user");
   goToNextStep(currentQuestion.value.answers[0].nextId);
 };
