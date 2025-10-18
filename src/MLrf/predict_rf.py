@@ -26,7 +26,7 @@ def predict_disease_from_text(text: str, topk: int = 3):
     #   4. Return the top-k most probable diseases.
     # """
 
-    # Step 1: Extract features from text using your NLP pipeline
+    # Step 1: Extract features from text using the NLP pipeline from entext_train.py
     extracted = extract_features(text)
     combined = combine_features(extracted)
 
