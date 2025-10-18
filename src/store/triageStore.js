@@ -53,6 +53,32 @@ export const useTriageStore = defineStore('triage', {
     },
 
     // Inputs
+    reset() {
+  // Clear state
+  this.token = null
+  this.user = null
+  this.profile = {
+    gender: 1,
+    age: '',
+    conditions: '',
+    allergies: '',
+    medications: '',
+  }
+  this.textInput = ''
+  this.audioBlob = null
+  this.selectedSymptoms = []
+  this.selfAssessment = { severity: null, feeling: null }
+  this.submitting = false
+  this.error = null
+  this.lastReport = null
+  this.history = []
+
+  // Clear localStorage
+  localStorage.removeItem(LS_TOKEN)
+  localStorage.removeItem(LS_USER)
+  localStorage.removeItem(LS_PROFILE)
+  localStorage.removeItem(LS_HISTORY)
+},
     setText(v){ this.textInput = v },
     setAudio(b){ this.audioBlob = b },
     setSelectedSymptoms(v){ this.selectedSymptoms = v || [] },
@@ -62,6 +88,7 @@ export const useTriageStore = defineStore('triage', {
     this.selectedSymptoms.push(symptom)
     }
     },
+    
     // ---- 最终提交----
     async submitTriageFinal() {
       try{
