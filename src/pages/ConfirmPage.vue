@@ -110,8 +110,8 @@ const error = ref("");
 const result = ref("");
 
 // API
-const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:5000";
-const TRIAGE_URL = `${API_BASE}/api/triage/summary`;
+const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+const TRIAGE_URL = `${API_BASE}/predict`;
 
 async function submitSummary() {
   error.value = "";

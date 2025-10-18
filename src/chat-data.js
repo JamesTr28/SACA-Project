@@ -26,7 +26,7 @@ export const chatFlow = {
     key: 'nlpSymptoms',
     type: 'nlp-input',
     text: 'Please describe your symptoms in detail.',
-    answers: [{ text: 'Analyze', nextId: 13 }] // Goes to final summary
+    answers: [{ text: 'Analyze', nextId: 14 }] // Goes to final summary
   },
 
   // --- PATH 2: SYMPTOM PICKER FLOW ---
@@ -34,7 +34,7 @@ export const chatFlow = {
     key: 'symptoms',
     type: 'symptom-picker',
     text: 'Please select your primary symptoms from the list.',
-    answers: [{ text: 'Next', nextId: 13 }] // Goes to final summary
+    answers: [{ text: 'Next', nextId: 14 }] // Goes to final summary
   },
 
   // --- PATH 3: SKIN LESION ANALYSIS FLOW ---
@@ -47,7 +47,7 @@ export const chatFlow = {
   12: {
     key: 'skinResult',
     text: 'Analyzing your image...',
-    nextId: 13 // Goes to final summary
+    nextId: 14 // Goes to final summary
   },
 
   // --- FINAL STEP: SUMMARY REPORT ---
@@ -55,5 +55,24 @@ export const chatFlow = {
     type: 'summary',
     text: 'Please confirm your input below. This is your final report.',
     end: true
-  }
+  },
+    // Service Selection returned:
+  14:{
+    key: 'service',
+    type: 'choice',
+    text: 'Your previous input has been recorded. Would you like to add more information?',
+    answers: [
+      { text: 'Yes', nextId: 15 },      // Path 1: NLP
+      { text: 'No, submit', nextId: 13 }
+    ]
+  },  15: {
+    key: 'service',
+    type: 'choice',
+    text: 'Thank you. Please choose another input method:',
+    answers: [
+      { text: 'General Check-up (by text)', nextId: 9 },      // Path 1: NLP
+      { text: 'Select Symptoms by Image', nextId: 10 },  // Path 2: Symptom Picker (Restored)
+      { text: 'Skin Lesion Analysis', nextId: 11 }          // Path 3: Skin Upload
+    ]
+  },
 };
