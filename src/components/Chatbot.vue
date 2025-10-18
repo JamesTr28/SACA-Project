@@ -297,6 +297,8 @@ async function handleFileSelect(event) {
     formData.append('audio', file);
     const { data: result } = await axios.post(ASR_URL, formData);
     console.log("ASR Result:", result);
+    userInput.value = (userInput.value ? userInput.value + ' ' : '') + (result?.text || '');
+    collectedData.value.voice_text = result?.text || '';
   } catch (err) {
     error.value = err.message;
   } finally {
