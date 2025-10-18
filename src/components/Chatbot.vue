@@ -95,6 +95,8 @@ const API_BASE   = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000';
 const VISION_URL = `${API_BASE}/vision/predict`;
 const NLP_URL    = `${API_BASE}/nlp/process`;
 const ASR_URL    = `${API_BASE}/asr/transcribe`;
+const ASR_BLOB_URL    = `${API_BASE}/asr/transcribe-blob`;
+
 
 /* ---------- STATE ---------- */
 const router = useRouter();
@@ -243,7 +245,6 @@ const handleSkinUpload = async (event) => {
 };
 
 /* ---------- Microphone (ASR) ---------- */
-
 const isRec = ref(false);
 const asrError = ref('');
 let mediaRecorder; let chunks = [];
@@ -261,8 +262,9 @@ const startRec = async () => {
       try {
         const blob = new Blob(chunks, { type: mediaRecorder.mimeType || 'audio/webm' });
         console.log("Blob type:", blob.type); // e.g., 'audio/webm'
+        console.log('Blob size:', blob.size);
         const fd = new FormData(); fd.append('audio', blob, 'recording.webm');
-        const { data } = await axios.post(ASR_URL, fd);
+        const { data } = await axios.post(ASR_BLOB_URL, fd);
         userInput.value = (userInput.value ? userInput.value + ' ' : '') + (data?.text || '');
         collectedData.value.voice_text = data?.text || '';
       } catch (e) {
@@ -301,7 +303,6 @@ async function handleFileSelect(event) {
     event.target.value = ""; // allow re-selecting same file
   }
 }
-
 
 /* ---------- Boot ---------- */
 onMounted(() => { addMessage(currentQuestion.value.text, 'bot'); });
