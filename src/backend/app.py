@@ -56,6 +56,52 @@ def asr_transcribe_endpoint():
     except Exception as e:
         return jsonify({"detail": f"Transcription failed: {e}"}), 500
 
+@app.post("/asr/transcribe-blob")
+def asr_transcribe_blob():
+    print("[/asr/transcribe-blob] HIT")
+    if "audio" not in request.files:
+        return jsonify({"detail": "Missing file field 'audio'."}), 400
+
+    f = request.files["audio"]
+    if not f or f.filename is None or f.filename.strip() == "":
+        return jsonify({"detail": "Empty filename."}), 400
+
+    _, ext = os.path.splitext(f.filename.lower())
+    if ext not in {'.webm', '.ogg', '.mp3', '.wav'}:
+        return jsonify({"detail": f"Unsupported file type: {ext}"}), 400
+
+    try:
+        audio_bytes = f.read()
+
+        # Convert to 16kHz WAV in memory
+        ffmpeg_cmd = [
+            "ffmpeg",
+            "-i", "pipe:0",
+            "-ar", "16000",
+            "-ac", "1",
+            "-f", "wav",
+            "pipe:1"
+        ]
+        proc = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        wav_bytes, err = proc.communicate(input=audio_bytes)
+        if proc.returncode != 0:
+            raise RuntimeError(f"FFmpeg failed: {err.decode()}")
+
+        # Transcribe from in-memory WAV
+        import io
+        wav_stream = io.BytesIO(wav_bytes)
+        text = asr_transcribe(wav_stream)
+
+        return jsonify({
+            "text": text,
+            "device": "cuda" if torch.cuda.is_available()
+                     else ("mps" if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available()
+                     else "cpu")
+        })
+
+    except Exception as e:
+        return jsonify({"detail": f"Transcription failed: {e}"}), 500
+
 @app.get("/healthz")
 def healthz():
     return jsonify({"ok": True, **mt_info()})
@@ -173,5 +219,7 @@ def predict_disease():
         "jobId": datetime.datetime.now(),
         "disease": disease
     })
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)

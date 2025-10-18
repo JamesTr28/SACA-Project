@@ -36,6 +36,23 @@ export async function asrTranscribeFile(file) {
   }
   return res.json(); // { text, runtime_ms, device }
 }
+
+export async function asrTranscribeFileBlod(file) {
+  const fd = new FormData();
+  fd.append("audio", file); // field name must be 'audio'
+
+  const res = await fetch(`${BASE}/asr/transcribe-blob`, {
+    method: "POST",
+    body: fd, // no Content-Type header; browser sets multipart boundary
+  });
+
+  if (!res.ok) {
+    const detail = await res.json().catch(() => ({}));
+    throw new Error(detail?.detail || `HTTP ${res.status}`);
+  }
+  return res.json(); // { text, runtime_ms, device }
+}
+
 // Symptom extraction from text
 // src/frontend/api.js
 export async function nlpProcessTexts(text) {
