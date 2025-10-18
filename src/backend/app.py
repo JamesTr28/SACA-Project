@@ -4,6 +4,7 @@ import torch
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import datetime
+import subprocess
 
 # Ensure we can import src.NLP_components.*
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -21,6 +22,12 @@ NLP = bootstrap_pipeline()  # returns an object holding nlp, matchers, dictionar
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173"]}})
 ALLOWED_EXTS = {".wav", ".flac", ".mp3", ".m4a", ".ogg", ".opus"}
+def convert_to_wav_16khz(input_path, output_path):
+    subprocess.run([
+        "ffmpeg", "-y", "-i", input_path,
+        "-ar", "16000", "-ac", "1",  # 16kHz mono
+        output_path
+    ], check=True)
 
 @app.post("/asr/transcribe")
 def asr_transcribe_endpoint():
@@ -40,27 +47,15 @@ def asr_transcribe_endpoint():
     if ext not in ALLOWED_EXTS:
         return jsonify({"detail": f"Unsupported file type: {ext}. Allowed: {sorted(ALLOWED_EXTS)}"}), 400
 
-    # Save to a temp file, run ASR, clean up
-    t0 = time.time()
-    tmp = None
+    # Run ASR, clean up
     try:
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
-        f.save(tmp.name)
-        tmp.flush()
-
-        text = asr_transcribe(tmp.name)  # <- your MMS transcribe() function
-        ms = int((time.time() - t0) * 1000)
-        return jsonify({"text": text, "runtime_ms": ms, "device": "cuda" if torch.cuda.is_available() else ("mps" if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available() else "cpu")})
+        text = asr_transcribe(f)  # <- your MMS transcribe() function
+        return jsonify({"text": text, "device": "cuda" if torch.cuda.is_available() else ("mps" if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available() else "cpu")})
     except FileNotFoundError:
         return jsonify({"detail": "File not found after upload."}), 500
     except Exception as e:
         return jsonify({"detail": f"Transcription failed: {e}"}), 500
-    finally:
-        try:
-            if tmp is not None:
-                os.unlink(tmp.name)
-        except Exception:
-            pass
+
 @app.get("/healthz")
 def healthz():
     return jsonify({"ok": True, **mt_info()})
