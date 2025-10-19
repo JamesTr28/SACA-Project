@@ -4,7 +4,7 @@ import pandas as pd
 from entext_train import extract_features, combine_features  # Use  existing NLP extraction logic
 
 # 1. Load the trained Random Forest model 
-MODEL_PATH = "model_rf.joblib"  # or "model_rf.pkl" 
+MODEL_PATH = "src\MLrf\model_rf.pkl"  # or "model_rf.pkl" 
 bundle = joblib.load(MODEL_PATH)
 
 model = bundle["model"]                  # Extract the trained RandomForest model
