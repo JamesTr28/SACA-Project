@@ -63,7 +63,7 @@ export const chatFlow = {
     text: 'Your previous input has been recorded. Would you like to add more information?',
     answers: [
       { text: 'Yes', nextId: 15 },      // Path 1: NLP
-      { text: 'No, submit', nextId: 13 }
+      { text: 'No, submit', nextId: 16 }
     ]
   },  15: {
     key: 'service',
@@ -73,6 +73,15 @@ export const chatFlow = {
       { text: 'General Check-up (by text)', nextId: 9 },      // Path 1: NLP
       { text: 'Select Symptoms by Image', nextId: 10 },  // Path 2: Symptom Picker (Restored)
       { text: 'Skin Lesion Analysis', nextId: 11 }          // Path 3: Skin Upload
+    ]
+  },
+   16: {
+    key: 'service',
+    type: 'choice',
+    text: 'Thank you. Would you like to reset or finish?',
+    answers: [
+      { text: 'Reset', nextId: 13 },      // Path 1: NLP
+      { text: 'Finish', nextId: 13 },  // Path 2: Symptom Picker (Restored)        // Path 3: Skin Upload
     ]
   },
 };

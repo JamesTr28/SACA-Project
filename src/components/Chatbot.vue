@@ -39,7 +39,16 @@
         <button :disabled="!userInput" @click="submitText">Send</button>
         <p v-if="error" class="error-message">{{ error }}</p>
       </template>
-
+      <!-- Submit and return result -->
+      <template v-if="currentQuestion.type === 'submit'">
+        <button
+          v-for="(answer, index) in currentQuestion.answers"
+          :key="index"
+          @click="handleChoice(answer)"
+        >
+          {{ answer.text }}
+        </button>
+      </template>
       <!-- symptom picker -->
       <template v-else-if="currentQuestion.type === 'symptom-picker'">
         <div class="symptom-grid">
@@ -194,11 +203,54 @@ function finishConversation() {
   router.push("/confirm");
   console.log("Collected Data:", collectedData.value);
 }
+// Handle submitting on chatbot
+
+// Submit and disease preduction
+const TRIAGE_URL = `${API_BASE}/predict`;
+const result = ref("");
+const submitting = ref(false);
+// const subError = ref("");
+async function handleSubmit() {
+  store.updateProfile(collectedData.value);
+  result.value = "";
+  submitting.value = true;
+
+  try {
+    const { data } = await axios.post(
+      TRIAGE_URL,
+      { symptoms: symptoms.value },
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
+    console.log("Triage API response:", data);
+    console.log(data);
+    console.log("Predicted Disease:", data.disease);
+    addMessage(
+      `🩺 Based on your inputs, the predicted condition is: ${data.disease}`,
+      "bot"
+    );
+  } catch (e) {
+    error.value =
+      e?.response?.data?.message ||
+      e.message ||
+      "NetworkError when attempting to fetch resource.";
+  } finally {
+    submitting.value = false;
+  }
+}
 
 /* ---------- CHOICES / TEXT ---------- */
 const handleChoice = (answer) => {
-  addMessage(answer.text, "user");
-  goToNextStep(answer.nextId);
+  if (answer.text === "No, submit") {
+    handleSubmit();
+    goToNextStep(answer.nextId);
+  } else {
+    addMessage(answer.text, "user");
+
+    goToNextStep(answer.nextId);
+  }
 };
 
 const submitText = () => {
@@ -419,9 +471,11 @@ onMounted(() => {
   margin: 20px auto;
   height: 70vh;
   background: white;
-  background-image: 
-  linear-gradient(rgba(253, 207, 207, 0.144),
-   rgba(147, 236, 4, 0.103)), url('src/assets/bg/bg1.jpg');
+  background-image: linear-gradient(
+      rgba(253, 207, 207, 0.144),
+      rgba(147, 236, 4, 0.103)
+    ),
+    url("src/assets/bg/bg1.jpg");
   background-size: cover; /* scales image to cover entire area */
   background-repeat: no-repeat; /* prevents tiling */
   background-position: center; /* centers the image */
