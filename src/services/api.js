@@ -125,7 +125,16 @@ export async function uploadAudio(blob, token) {
   // return await req('/triage/audio', { method:'POST', token, form })
   return new Promise((r)=> setTimeout(()=> r({ jobId: 'audio_' + Date.now(), note:'mocked' }), 500))
 }
+export async function predictFromText(text) {
+  const res = await fetch(`${BASE}/MLpredict2`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
 
+  const data = await res.json();
+  return data;
+}
 export async function fetchReport(jobId, disease) {
   // return new Promise((r)=> setTimeout(()=> r({
   //   jobId,

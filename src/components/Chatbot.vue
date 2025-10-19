@@ -247,7 +247,7 @@ async function handleSubmit() {
     );
     const severity = classifyDisease(data.disease);
     addMessage(`And its severity is classified as: ${severity}`, "bot");
-    const precautionsList = data.precautions.map((p) => `• ${p}`).join("\n");
+    let precautionsList = data.precautions.map((p) => `• ${p}`).join("\n");
     if (precautionsList == "") {
       switch (severity) {
         case "mild":
@@ -282,9 +282,18 @@ const handleChoice = async (answer) => {
   if (answer.text === "No, submit") {
     await handleSubmit();
     goToNextStep(answer.nextId);
+  } else if (answer.text === "Reset") {
+    // Reset conversation
+    messages.value = [];
+    currentQuestionId.value = 1;
+    currentQuestion.value = chatFlow[1];
+    conversationEnded.value = false;
+    collectedData.value = {};
+    selectedSymptoms.value = [];
+    store.reset();
+    addMessage(currentQuestion.value.text, "bot");
   } else {
     addMessage(answer.text, "user");
-
     goToNextStep(answer.nextId);
   }
 };
