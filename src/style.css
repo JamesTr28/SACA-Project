@@ -43,7 +43,9 @@ html, body, #app {
       rgba(255,255,255,0.0) 8px,
       rgba(255,255,255,0.0) 16px
     );
-  background-size: var(--bg-size), 140px 140px;
+
+  /* background-size: cover; /* scales image to cover entire area */
+
   background-attachment: fixed, fixed; /* 固定背景，滚动不动更丝滑 */
   animation: bg-pan var(--bg-duration) var(--bg-ease) infinite alternate;
 }

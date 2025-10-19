@@ -419,6 +419,13 @@ onMounted(() => {
   margin: 20px auto;
   height: 70vh;
   background: white;
+  background-image: 
+  linear-gradient(rgba(253, 207, 207, 0.144),
+   rgba(147, 236, 4, 0.103)), url('src/assets/bg/bg1.jpg');
+  background-size: cover; /* scales image to cover entire area */
+  background-repeat: no-repeat; /* prevents tiling */
+  background-position: center; /* centers the image */
+
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 .messages-container {
