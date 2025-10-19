@@ -58,7 +58,7 @@
     </div>
 
     <!-- Self assessment -->
-    <div class="card">
+    <!-- <div class="card">
       <h3>{{ t("confirm.self") }}</h3>
       <p>
         {{ t("triage.self_severity") }}:
@@ -67,7 +67,7 @@
       <p>
         {{ t("triage.self_feeling") }}: {{ sa.feeling ?? t("confirm.voiceNo") }}
       </p>
-    </div>
+    </div> -->
 
     <!-- Actions -->
     <div class="actions">
@@ -131,8 +131,8 @@ async function submitSummary() {
       data.next_steps && data.next_steps.length
         ? `\n\nNext steps:\n• ${data.next_steps.join("\n• ")}`
         : "";
-
-    result.value = `${data.summary || ""}${next}`;
+    console.log(data);
+    result.value = `${data.disease || ""}${next}`;
   } catch (e) {
     error.value =
       e?.response?.data?.message ||

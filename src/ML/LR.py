@@ -1,13 +1,15 @@
 import pandas as pd
 import joblib
-
+import os
+def get_local_path(filename):
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
 def predict(input_symptoms: []):
     # Load the model
-    lr = joblib.load('src/ML/logistic_model.pkl')
-    le = joblib.load("src/ML/label_encoder.pkl")
+    lr = joblib.load(get_local_path("logistic_model.pkl"))
+    le = joblib.load(get_local_path("label_encoder.pkl"))
 
     # Load the original dataset just to get column names
-    df = pd.read_csv("src/ML/diseases_symptoms_sample_trim.csv")
+    df = pd.read_csv(get_local_path("diseases_symptoms_sample_trim.csv"))
     df.columns = df.columns.str.replace(' ', '_')
 
     # Drop disease column
