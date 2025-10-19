@@ -1,10 +1,16 @@
 # src/backend/app.py
-import os, sys, time, tempfile
+import os, sys, time, tempfile, traceback, io
+from werkzeug.datastructures import FileStorage
 import torch
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import datetime
+import subprocess
+import ffmpeg
+import imageio_ffmpeg
+FFMPEG_BIN = imageio_ffmpeg.get_ffmpeg_exe()  # absolute path to ffmpeg.exe
 
+import torchaudio
 # Ensure we can import src.NLP_components.*
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT not in sys.path:
@@ -20,7 +26,13 @@ NLP = bootstrap_pipeline()  # returns an object holding nlp, matchers, dictionar
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173"]}})
-ALLOWED_EXTS = {".wav", ".flac", ".mp3", ".m4a", ".ogg", ".opus"}
+ALLOWED_EXTS = {".wav", ".flac", ".mp3", ".m4a", ".ogg", ".opus", ".webm"}
+def convert_to_wav_16khz(input_path, output_path):
+    subprocess.run([
+        "ffmpeg", "-y", "-i", input_path,
+        "-ar", "16000", "-ac", "1",  # 16kHz mono
+        output_path
+    ], check=True)
 
 @app.post("/asr/transcribe")
 def asr_transcribe_endpoint():
@@ -40,27 +52,87 @@ def asr_transcribe_endpoint():
     if ext not in ALLOWED_EXTS:
         return jsonify({"detail": f"Unsupported file type: {ext}. Allowed: {sorted(ALLOWED_EXTS)}"}), 400
 
-    # Save to a temp file, run ASR, clean up
-    t0 = time.time()
-    tmp = None
+    # Run ASR, clean up
     try:
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
-        f.save(tmp.name)
-        tmp.flush()
-
-        text = asr_transcribe(tmp.name)  # <- your MMS transcribe() function
-        ms = int((time.time() - t0) * 1000)
-        return jsonify({"text": text, "runtime_ms": ms, "device": "cuda" if torch.cuda.is_available() else ("mps" if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available() else "cpu")})
+        text = asr_transcribe(f)  # <- your MMS transcribe() function
+        return jsonify({"text": text, "device": "cuda" if torch.cuda.is_available() else ("mps" if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available() else "cpu")})
     except FileNotFoundError:
+        print("FileNotFoundError in /asr/transcribe")
         return jsonify({"detail": "File not found after upload."}), 500
     except Exception as e:
-        return jsonify({"detail": f"Transcription failed: {e}"}), 500
-    finally:
+        print(f"Exception in /asr/transcribe: {e}")
+        return jsonify({"detail": f"Transcription failed: {e}"}), 515
+
+@app.post("/asr/transcribe-blob")
+def asr_transcribe_blob():
+    """
+    Accepts a single uploaded audio file under form field name 'audio'.
+    Accepts webm (MediaRecorder) and converts to wav@16kHz mono before inference.
+    Returns: { text, runtime_ms, device }
+    """
+    t0 = time.perf_counter()
+    print("[/asr/transcribe] HIT")
+
+    if "audio" not in request.files:
+        return jsonify({"detail": "Missing file field 'audio'."}), 400
+
+    up = request.files["audio"]
+    if not up or not (up.filename or "").strip():
+        return jsonify({"detail": "Empty filename."}), 400
+
+    fname = up.filename.lower().strip()
+    _, ext = os.path.splitext(fname)
+    if ext not in ALLOWED_EXTS:
+        # webm from MediaRecorder should be allowed
+        if "webm" in (up.mimetype or "").lower():
+            ext = ".webm"
+        else:
+            return jsonify({"detail": f"Unsupported file type: {ext or '(unknown)'}"}), 400
+
+    in_fd, in_path = tempfile.mkstemp(suffix=ext); os.close(in_fd)
+    out_fd, out_path = tempfile.mkstemp(suffix=".wav"); os.close(out_fd)
+
+    try:
+        up.save(in_path)
+        print(f"[convert] in={in_path} -> out={out_path}")
+
+        (
+            ffmpeg
+            .input(in_path)
+            .output(out_path, ar=16000, ac=1, format="wav")
+            .overwrite_output()
+            .run(cmd=FFMPEG_BIN, quiet=True)
+        )
+
+        # Sanity-check with torchaudio (or soundfile)
+        wave, sr = torchaudio.load(out_path)
+        if sr != 16000 or wave.numel() == 0:
+            return jsonify({"detail": f"Bad WAV after convert (sr={sr}, samples={wave.numel()})."}), 500
+
+        # >>> Call your transcriber with PATH (Option A) <<<
+        text = asr_transcribe(out_path)
+
+        runtime_ms = int((time.perf_counter() - t0) * 1000)
+        device = "cuda" if torch.cuda.is_available() else ("mps" if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available() else "cpu")
+        return jsonify({"text": text, "runtime_ms": runtime_ms, "device": device})
+
+    except ffmpeg.Error as e:
         try:
-            if tmp is not None:
-                os.unlink(tmp.name)
+            err = e.stderr.decode("utf-8", errors="ignore")
         except Exception:
-            pass
+            err = str(e)
+        return jsonify({"detail": "FFmpeg failed", "ffmpeg": err}), 500
+    except FileNotFoundError as e:
+        return jsonify({"detail": f"FileNotFoundError: {e}", "in_path": in_path, "out_path": out_path}), 500
+    except Exception as e:
+        return jsonify({"detail": f"Transcription failed: {e}", "trace": traceback.format_exc()}), 500
+    finally:
+        for p in (in_path, out_path):
+            try:
+                if p and os.path.exists(p):
+                    os.remove(p)
+            except:
+                pass
 @app.get("/healthz")
 def healthz():
     return jsonify({"ok": True, **mt_info()})
@@ -178,5 +250,7 @@ def predict_disease():
         "jobId": datetime.datetime.now(),
         "disease": disease
     })
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)
