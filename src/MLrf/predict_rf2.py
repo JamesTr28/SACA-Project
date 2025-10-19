@@ -2,10 +2,10 @@ import pandas as pd
 import joblib
 
 def predict(input_symptoms: []):
-    """
-    Predict disease from a list of underscore symptoms using the trained Random Forest model.
-    Example input: ['fever', 'shortness_of_breath', 'cough']
-    """
+    # """
+    # Predict disease from a list of underscore symptoms using the trained Random Forest model.
+    # Example input: ['fever', 'shortness_of_breath', 'cough']
+    # """
 
     #  Load model bundle
     bundle = joblib.load('model_rf_compressed2.joblib')     
