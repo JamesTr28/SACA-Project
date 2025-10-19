@@ -132,6 +132,7 @@ import { useRouter } from "vue-router";
 import { useTriageStore } from "@/store/triageStore";
 import { chatFlow } from "../chat-data.js";
 import axios from "axios";
+import { classifyDisease } from "./severityRating.js";
 
 /* ---------- API URLs ---------- */
 const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
@@ -168,6 +169,13 @@ const symptoms = ref([
   { label: "Rash", img: "rash.png" },
   { label: "Vomit", img: "vomit.png" },
 ]);
+//  function classifyDisease(name) {
+//   const n = name.toLowerCase().trim()
+//   if (severityMap.mild.some(x => x.toLowerCase() === n)) return 'mild'
+//   if (severityMap.moderate.some(x => x.toLowerCase() === n)) return 'moderate'
+//   if (severityMap.severe.some(x => x.toLowerCase() === n)) return 'severe'
+//   return null
+// }
 
 const getSymptomImageUrl = (imageName) =>
   new URL(`../assets/${imageName}`, import.meta.url).href;
@@ -216,9 +224,15 @@ async function handleSubmit() {
   submitting.value = true;
 
   try {
+    const rawSymptoms = [...selectedSymptoms.value];
+    const formattedSymptoms = rawSymptoms.map((s) =>
+      s.trim().toLowerCase().replace(/\s+/g, "_")
+    );
+
+    console.log("Submitting symptoms:", formattedSymptoms);
     const { data } = await axios.post(
       TRIAGE_URL,
-      { symptoms: symptoms.value },
+      { symptoms: formattedSymptoms },
       {
         headers: { "Content-Type": "application/json" },
       }
@@ -231,6 +245,28 @@ async function handleSubmit() {
       `🩺 Based on your inputs, the predicted condition is: ${data.disease}`,
       "bot"
     );
+    const severity = classifyDisease(data.disease);
+    addMessage(`And its severity is classified as: ${severity}`, "bot");
+    const precautionsList = data.precautions.map((p) => `• ${p}`).join("\n");
+    if (precautionsList == "") {
+      switch (severity) {
+        case "mild":
+          precautionsList =
+            "• Rest at home\n• Stay hydrated\n• Monitor symptoms";
+          break;
+        case "moderate":
+          precautionsList =
+            "• Consult a healthcare provider\n• Avoid strenuous activities\n• Follow prescribed medications";
+          break;
+        case "severe":
+          precautionsList =
+            "• Seek immediate medical attention\n• Follow emergency protocols\n• Do not self-medicate";
+          break;
+        default:
+          precautionsList = "• Maintain general health precautions";
+      }
+    }
+    addMessage(`And the precautions for it are:\n${precautionsList}`, "bot");
   } catch (e) {
     error.value =
       e?.response?.data?.message ||
@@ -242,9 +278,9 @@ async function handleSubmit() {
 }
 
 /* ---------- CHOICES / TEXT ---------- */
-const handleChoice = (answer) => {
+const handleChoice = async (answer) => {
   if (answer.text === "No, submit") {
-    handleSubmit();
+    await handleSubmit();
     goToNextStep(answer.nextId);
   } else {
     addMessage(answer.text, "user");
@@ -448,6 +484,7 @@ async function handleFileSelect(event) {
     event.target.value = ""; // allow re-selecting same file
   }
 }
+// Severity rating
 
 /* ---------- Boot ---------- */
 onMounted(() => {

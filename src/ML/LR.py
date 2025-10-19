@@ -35,3 +35,5 @@ def predict(input_symptoms: []):
 
 if __name__ == "__main__":
     predict(['depression', 'shortness_of_breath']);
+    predict(['chest_pain', 'fatigue', 'high_fever']
+);
