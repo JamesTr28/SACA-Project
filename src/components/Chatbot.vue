@@ -60,7 +60,8 @@
             @click="toggleSymptom(symptom.label)"
           >
             <img :src="getSymptomImageUrl(symptom.img)" :alt="symptom.label" />
-            <p>{{ symptom.label }}</p>
+<p>{{ isWarlpiri ? warlpiriTranslations[symptom.label] || symptom.label : symptom.label }}</p>
+            <p>{{ language.value }}</p>
           </div>
         </div>
         <button class="next-button" @click="submitSymptoms">Next</button>
@@ -127,12 +128,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useTriageStore } from "@/store/triageStore";
 import { chatFlow } from "../chat-data.js";
 import axios from "axios";
 import { classifyDisease } from "./severityRating.js";
+import i18nMessages from "@/i18n/messages"; // Renamed import to avoid conflict
 
 /* ---------- API URLs ---------- */
 const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
@@ -142,21 +144,39 @@ const ASR_URL = `${API_BASE}/asr/transcribe`;
 const ASR_BLOB_URL = `${API_BASE}/asr/transcribe-blob`;
 
 /* ---------- STATE ---------- */
+const isWarlpiri = computed(() =>
+  language.value?.trim().toLowerCase() === "warlpiri"
+);
 const router = useRouter();
 const store = useTriageStore();
 const collectedData = ref({});
-const messages = ref([]);
-const currentQuestionId = ref(1);
+const messages = ref([]); // This is for chat messages
+const currentQuestionId = ref(0);
 const isTyping = ref(false);
 const conversationEnded = ref(false);
 const userInput = ref("");
 const error = ref("");
+const language = ref("English");
 const fileInput = ref(null);
 const asrResult = ref(null);
 const currentQuestion = ref(chatFlow[currentQuestionId.value]);
 const selectedSymptoms = ref([]);
 
 /* ---------- SYMPTOM GRID ---------- */
+const warlpiriTranslations = {
+  "Abdominal Pain": "Miyalu Raga",
+  "High Fever": "Papimi",
+  "Cough": "Kuntulpa",
+  "Sore throat": "Waninja-kiri",
+  "Headache": "Ruku-ruku",
+  "Nausea": "Kalti-kalti-mani",
+  "Vomit": "Karlti-karlti",
+  "Diarrhea": "Kuna-kalykala",
+  "Chest Pain": "Yutarki raga",
+  "Shortness of breath": "Ngaany-kutu-kutu",
+  "Rash": "Janjalyarra",
+  "Fatigue": "Murra-murra",
+};
 const symptoms = ref([
   { label: "Abdominal Pain", img: "abdominal-pain.png" },
   { label: "Chest Pain", img: "chest-pain.png" },
@@ -169,19 +189,28 @@ const symptoms = ref([
   { label: "Rash", img: "rash.png" },
   { label: "Vomit", img: "vomit.png" },
 ]);
-//  function classifyDisease(name) {
-//   const n = name.toLowerCase().trim()
-//   if (severityMap.mild.some(x => x.toLowerCase() === n)) return 'mild'
-//   if (severityMap.moderate.some(x => x.toLowerCase() === n)) return 'moderate'
-//   if (severityMap.severe.some(x => x.toLowerCase() === n)) return 'severe'
-//   return null
-// }
 
 const getSymptomImageUrl = (imageName) =>
   new URL(`../assets/${imageName}`, import.meta.url).href;
 
 /* ---------- CORE HELPERS ---------- */
+const getTranslatedText = (questionId) => {
+  const lang = language.value.toLowerCase() === "warlpiri" ? "wp" : "en";
+  // Get text from i18n messages using the question ID
+  return i18nMessages[lang][`${questionId}.text`] || currentQuestion.value.text;
+};
+
 const addMessage = (text, sender) => {
+  // If it's a bot message, translate it
+  const finalText =
+    sender === "bot" ? getTranslatedText(currentQuestionId.value) : text;
+
+  messages.value.push({ id: messages.value.length, text: finalText, sender });
+  if (sender === "user" && currentQuestion.value.key) {
+    collectedData.value[currentQuestion.value.key] = text;
+  }
+};
+const addMessageNoT = (text, sender) => {
   messages.value.push({ id: messages.value.length, text, sender });
   if (sender === "user" && currentQuestion.value.key) {
     collectedData.value[currentQuestion.value.key] = text;
@@ -198,7 +227,7 @@ const goToNextStep = (nextId) => {
     if (nextId && chatFlow[nextId]) {
       currentQuestionId.value = nextId;
       currentQuestion.value = chatFlow[nextId];
-      addMessage(currentQuestion.value.text, "bot");
+      addMessageNoT(getTranslatedText(nextId), "bot");
     }
   }, 800);
 };
@@ -241,12 +270,12 @@ async function handleSubmit() {
     console.log("Triage API response:", data);
     console.log(data);
     console.log("Predicted Disease:", data.disease);
-    addMessage(
+    addMessageNoT(
       `🩺 Based on your inputs, the predicted condition is: ${data.disease}`,
       "bot"
     );
     const severity = classifyDisease(data.disease);
-    addMessage(`And its severity is classified as: ${severity}`, "bot");
+    addMessageNoT(`And its severity is classified as: ${severity}`, "bot");
     let precautionsList = data.precautions.map((p) => `• ${p}`).join("\n");
     if (precautionsList == "") {
       switch (severity) {
@@ -266,7 +295,7 @@ async function handleSubmit() {
           precautionsList = "• Maintain general health precautions";
       }
     }
-    addMessage(`And the precautions for it are:\n${precautionsList}`, "bot");
+    addMessageNoT(`And the precautions for it are:\n${precautionsList}`, "bot");
   } catch (e) {
     error.value =
       e?.response?.data?.message ||
@@ -291,10 +320,16 @@ const handleChoice = async (answer) => {
     collectedData.value = {};
     selectedSymptoms.value = [];
     store.reset();
-    addMessage(currentQuestion.value.text, "bot");
+    addMessage(getTranslatedText(1), "bot");
+  } else if (answer.text === "English" || answer.text === "Warlpiri") {
+    language.value = answer.text;
+    addMessageNoT(`Language set to ${language.value}.`, "bot");
+    // Translate next question before moving on
+    goToNextStep(answer.nextId);
   } else {
     addMessage(answer.text, "user");
     goToNextStep(answer.nextId);
+    console.log(language.value);
   }
 };
 
@@ -334,33 +369,43 @@ const submitNLPText = async () => {
   error.value = "";
 
   try {
-    const { data } = await axios.post(NLP_URL, text, {
+    // First translate if language is Warlpiri
+    let processedText = text;
+    if (language.value.toLowerCase() === "warlpiri") {
+      addMessageNoT("Translating from Warlpiri...", "bot");
+      const { data: translationData } = await axios.post(
+        `${API_BASE}/translate`,
+        { text: text },
+        { headers: { "Content-Type": "application/json" } }
+      );
+      processedText = translationData.translation;
+      addMessageNoT(`Translation: ${processedText}`, "bot");
+    }
+
+    // Now process the text (either translated or original)
+    const { data } = await axios.post(NLP_URL, processedText, {
       headers: { "Content-Type": "text/plain" },
     });
 
     const results = data?.results || [];
     const summary = results.length ? results.join(", ") : "No findings";
-    addMessage(`🩺 NLP Results: ${summary}`, "bot");
+    addMessageNoT(`🩺 NLP Results: ${summary}`, "bot");
     console.log("NLP Results:", results);
     console.log("NLP Summary:", summary);
-    // Store for confirm page
-    collectedData.value.nlp_text += text;
-    collectedData.value.nlp_results += summary;
+
+    // Store both original and processed text
+    collectedData.value.original_text = text;
+    collectedData.value.nlp_text = processedText;
+    collectedData.value.nlp_results = summary;
+
+    // Add symptoms to store
     for (const symptom of results) {
       store.addSymptom(symptom);
     }
-
-    //Add each symptom to collectedData
-
-    // if (!collectedData.value.symptoms) {
-    //   collectedData.value.symptoms = [];
-    // }
-    // collectedData.value.symptoms += results;
   } catch (e) {
-    const msg =
-      e?.response?.data?.detail || e?.message || "NLP analysis failed.";
+    const msg = e?.response?.data?.detail || e?.message || "Analysis failed.";
     error.value = msg;
-    addMessage(`❌ ${msg}`, "bot");
+    addMessageNoT(`❌ ${msg}`, "bot");
   } finally {
     isTyping.value = false;
     goToNextStep(currentQuestion.value.answers[0].nextId);
@@ -398,7 +443,7 @@ const handleSkinUpload = async (event) => {
     const msg = `Analysis Result: ${
       result.predicted_class_name
     }\nConfidence: ${(result.confidence * 100).toFixed(2)}%`;
-    addMessage(msg, "bot");
+    addMessageNoT(msg, "bot");
 
     // store + jump straight to confirm
     collectedData.value.skin_analysis = result.predicted_class_name;
@@ -497,7 +542,7 @@ async function handleFileSelect(event) {
 
 /* ---------- Boot ---------- */
 onMounted(() => {
-  addMessage(currentQuestion.value.text, "bot");
+  addMessage(getTranslatedText(0), "bot");
   collectedData.value = {};
   store.updateProfile({});
   store.reset();

@@ -4,7 +4,70 @@ const messages = {
     brand: 'Intelligent Triage',
     nav: { home: 'Home', history: 'History', profile: 'Profile' },
     footer: { demo: 'Triage Demo' },
+yes: "Yes",
+    noSubmit: "No, submit",
+    analyze: "Analyze",
+    next: "Next",
+    continue: "Continue",
+    getResult: "Get Result",
+    english: "English",
+    warlpiri: "Warlpiri",
 
+    // Step texts + answer labels
+    "0.text": "What language would you like to use? English or Warlpiri?",
+    "0.a1": "English",
+    "0.a2": "Warlpiri",
+
+    "1.text": "To begin, what is your full name?",
+    "1.a1": "Continue",
+
+    "2.text": "What is your gender?",
+    "2.a1": "Male",
+    "2.a2": "Female",
+    "2.a3": "Other",
+    "2.a4": "Prefer not to say",
+
+    "3.text": "And your age?",
+    "3.a1": "Continue",
+
+    "4.text": "What is your current weight in kilograms (kg)? (Optional)",
+    "4.a1": "Continue",
+
+    "5.text": "Do you have any ongoing medical conditions, like diabetes or high blood pressure? (Optional)",
+    "5.a1": "Continue",
+
+    "6.text": "Do you have any known allergies? (Optional)",
+    "6.a1": "Continue",
+
+    "7.text": "Finally, are you taking any regular medications? (Optional)",
+    "7.a1": "Continue",
+
+    "8.text": "Thank you. How can I help you today?",
+    "8.a1": "General Check-up (by text)",
+    "8.a2": "Select Symptoms by Image",
+    "8.a3": "Skin Lesion Analysis",
+
+    "9.text": "Please describe your symptoms in detail.",
+    "9.a1": "Analyze",
+
+    "10.text": "Please select your primary symptoms from the list.",
+    "10.a1": "Next",
+
+    "11.text": "Please upload a clear photo of the skin area for analysis.",
+    "11.a1": "Get Result",
+
+    "12.text": "Analyzing your image...",
+
+    "13.text": "Please confirm your input below. This is your final report.",
+
+    "14.text": "Your previous input has been recorded. Would you like to add more information?",
+    "14.a1": "Yes",
+    "14.a2": "No, submit",
+
+    "15.text": "Thank you. Please choose another input method:",
+    "15.a1": "General Check-up (by text)",
+    "15.a2": "Select Symptoms by Image",
+    "15.a3": "Skin Lesion Analysis",
     auth: {
       login: 'Login',
       register: 'Register',
@@ -178,8 +241,70 @@ const messages = {
   },
 
   
-  wep: {
+  wp: {
+     yes: "Unga",
+    noSubmit: "Wiya, yapa",
+    analyze: "Yimi manu",
+    next: "Ngula-kari",
+    continue: "Yaa yukami",
+    getResult: "Get Result",
+    english: "English",
+    warlpiri: "Warlpiri",
 
+    "0.text": "What language would you like to use? English or Warlpiri?",
+    "0.a1": "English",
+    "0.a2": "Warlpiri",
+
+    "1.text": "Ngarrka, yimi nganta nyuntu??",
+    "1.a1": "Yaa yukami",
+
+    "2.text": "Ngarlipa nyuntu?",
+    "2.a1": "Wati",
+    "2.a2": "Wati-jarra",
+    "2.a3": "Yangka kujakuju inna",
+    "2.a4": "Yimi manu nganta yimi",
+
+    "3.text": "Yapa nyuntuku?",
+    "3.a1": "Yaa yukami",
+
+    "4.text": "Ngaju-nyanu pina yimi kilokaramu-rlu (kg) nganta? (Yapa karri)",
+    "4.a1": "Yaa yukami",
+
+    "5.text": "Nganangku-rna nyuntu-ku warrki jaruju arlirrpa-wiyi, yapa-kurlangu mirrka yungu, manu yapa-kurlangu rdumu manu jungunypa rdumu? (Yimi-ngarrirni pawuju-kurlu).",
+    "5.a1": "Yaa yukami",
+
+    "6.text": "Nyuntu-piya wiri-jarra alaji-kirli? (Yimi-ngarrirni kujurnpa)",
+    "6.a1": "Yaa yukami",
+
+    "7.text": "Yimi nayi, nyuntulu mirrka wardilyi yapa nyinanjaku yukanyi? (Yaanku)",
+    "7.a1": "Yaa yukami",
+
+    "8.text": "Yapa, ngurrju. Ngaju-rna-ku nyampu yaninjaku?",
+    "8.a1": "Yimi-ngarrirni yimi (text-palapi).",
+    "8.a2": "Yimi Ngarrka Karlirrpalirlirli Pinakitja",
+    "8.a3": "Kurdukurdu Ngarrka wiri-wiyarrirli",
+
+    "9.text": "Ngurrju nyampu nyuntulu yimi ngarrirni wardiyirli kujakuju ngurrju nganta.",
+    "9.a1": "Yimi manu",
+
+    "10.text": "Yimi nganta nyarrpa kalaki, ngurlu-manu-jala listangka.",
+    "10.a1": "Ngula-kari",
+
+    "11.text": "Ngurrju nyinami, pika-kari yimi ngarrka-jarri wurdungu wardinja kijirni rdakunjunu.",
+    "11.a1": "Get Result",
+
+    "12.text": "Ngaju-nyangu wita yimi-ngarrirni ngurra...",
+
+    "13.text": "Nganimpala yapangku ngurrju nyina. Yuwayi, nyuntuju palyajangka wardiyali.",
+
+    "14.text": "Nyuntunpa yimi ngurrju nyinakarri. Nyuntu wardiyali yimi yungu ngurrjuku?",
+    "14.a1": "Unga",
+    "14.a2": "Wiya, yapa",
+
+    "15.text": "Yapakurlu. Yinga-rna mirrparnpa-kari rdipalyi:",
+    "15.a1": "Yimi-ngarrirni yawurrulu (text-palu)",
+    "15.a2": "Yimi Ngarrka Wardipiki Ngarrka-kurlu Yankirri",
+    "15.a3": "Ngalyirrpa yapa wiri yarda kujakaji",
     brand: 'Intelligent Triage',
     nav: { home: 'Nguru', history: 'Nyurru-warnu', profile: 'Profile' },
     footer: { demo: 'Triage Demo' },

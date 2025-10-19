@@ -1,6 +1,15 @@
 // src/chat-data.js
 export const chatFlow = {
   // --- PART 1: BASIC INFORMATION (Unchanged) ---
+    0: {
+    key: 'language',
+    type: 'choice',
+    text: 'What language would you like to use?', // Default fallback text
+    answers: [      // Path 1: NLP
+      { text: 'English', nextId: 1 },  // Path 2: Symptom Picker (Restored)
+      { text: 'Warlpiri', nextId: 1 }          // Path 3: Skin Upload
+    ]
+  },
   1: { key: 'fullName', type: 'text', text: 'To begin, what is your full name?', answers: [{ text: 'Continue', nextId: 2 }] },
   2: { key: 'gender', type: 'choice', text: 'What is your gender?', answers: [ { text: 'Male', nextId: 3 }, { text: 'Female', nextId: 3 }, { text: 'Other', nextId: 3 }, { text: 'Prefer not to say', nextId: 3 } ] },
   3: { key: 'age', type: 'text', text: 'And your age?', inputType: 'number', min: 1, max: 120, answers: [{ text: 'Continue', nextId: 4 }] },
