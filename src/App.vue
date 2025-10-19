@@ -210,6 +210,9 @@ watch(() => ui.theme, applyTheme)
 .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
 .footer { padding: 24px 0; color: var(--muted); text-align: center; }
 .hello { margin-right: 6px; }
+/* .app{
+  background-color: ;
+} */
 
 /* Nav buttons — scoped in App.vue to beat global styles */
 .links .nav-btn {
