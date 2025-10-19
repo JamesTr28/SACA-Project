@@ -21,6 +21,7 @@ from NLP_components.ASR_Inference import transcribe as asr_transcribe
 from NLP_components.entext_train import process_texts, bootstrap_pipeline
 
 from ML.LR import predict
+from ML.precaution import get_precaution
 NLP = bootstrap_pipeline()  # returns an object holding nlp, matchers, dictionaries, etc.
 
 
@@ -245,10 +246,13 @@ def predict_disease():
         return jsonify({"detail": "No sympyoms provided"}), 400
 
     disease = predict(text)
+    #get precaution
+    precautions = get_precaution(disease)
 
     return jsonify({
         "jobId": datetime.datetime.now(),
-        "disease": disease
+        "disease": disease,
+        "precautions": precautions
     })
 
 
