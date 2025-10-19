@@ -19,7 +19,7 @@ if ROOT not in sys.path:
 from NLP_components.MT_Inference import translate as mt_translate, info as mt_info
 from NLP_components.ASR_Inference import transcribe as asr_transcribe
 from NLP_components.entext_train import process_texts, bootstrap_pipeline
-from MLrf.predict_rf import predict_disease_from_text
+
 from ML.LR import predict
 from ML.precaution import get_precaution
 NLP = bootstrap_pipeline()  # returns an object holding nlp, matchers, dictionaries, etc.
@@ -134,16 +134,6 @@ def asr_transcribe_blob():
                     os.remove(p)
             except:
                 pass
-
-@app.route("/MLpredict2", methods=["POST"])
-def predict():
-    data = request.get_json()
-    text = data.get("text", "")
-    topk = data.get("topk", 3)
-    predictions = predict_disease_from_text(text, topk)
-    return jsonify(predictions)
-
-
 @app.get("/healthz")
 def healthz():
     return jsonify({"ok": True, **mt_info()})
