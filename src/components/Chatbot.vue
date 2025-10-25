@@ -60,7 +60,13 @@
             @click="toggleSymptom(symptom.label)"
           >
             <img :src="getSymptomImageUrl(symptom.img)" :alt="symptom.label" />
-<p>{{ isWarlpiri ? warlpiriTranslations[symptom.label] || symptom.label : symptom.label }}</p>
+            <p>
+              {{
+                isWarlpiri
+                  ? warlpiriTranslations[symptom.label] || symptom.label
+                  : symptom.label
+              }}
+            </p>
             <p>{{ language.value }}</p>
           </div>
         </div>
@@ -144,8 +150,8 @@ const ASR_URL = `${API_BASE}/asr/transcribe`;
 const ASR_BLOB_URL = `${API_BASE}/asr/transcribe-blob`;
 
 /* ---------- STATE ---------- */
-const isWarlpiri = computed(() =>
-  language.value?.trim().toLowerCase() === "warlpiri"
+const isWarlpiri = computed(
+  () => language.value?.trim().toLowerCase() === "warlpiri"
 );
 const router = useRouter();
 const store = useTriageStore();
@@ -166,16 +172,16 @@ const selectedSymptoms = ref([]);
 const warlpiriTranslations = {
   "Abdominal Pain": "Miyalu Raga",
   "High Fever": "Papimi",
-  "Cough": "Kuntulpa",
+  Cough: "Kuntulpa",
   "Sore throat": "Waninja-kiri",
-  "Headache": "Ruku-ruku",
-  "Nausea": "Kalti-kalti-mani",
-  "Vomit": "Karlti-karlti",
-  "Diarrhea": "Kuna-kalykala",
+  Headache: "Ruku-ruku",
+  Nausea: "Kalti-kalti-mani",
+  Vomit: "Karlti-karlti",
+  Diarrhea: "Kuna-kalykala",
   "Chest Pain": "Yutarki raga",
   "Shortness of breath": "Ngaany-kutu-kutu",
-  "Rash": "Janjalyarra",
-  "Fatigue": "Murra-murra",
+  Rash: "Janjalyarra",
+  Fatigue: "Murra-murra",
 };
 const symptoms = ref([
   { label: "Abdominal Pain", img: "abdominal-pain.png" },
@@ -253,7 +259,11 @@ async function handleSubmit() {
   submitting.value = true;
 
   try {
-    const rawSymptoms = [...selectedSymptoms.value];
+    console.log("Selected symptoms for submission:", [
+      store.selectedSymptoms.value,
+    ]);
+    const rawSymptoms = [...store.selectedSymptoms];
+
     const formattedSymptoms = rawSymptoms.map((s) =>
       s.trim().toLowerCase().replace(/\s+/g, "_")
     );
@@ -401,6 +411,8 @@ const submitNLPText = async () => {
     // Add symptoms to store
     for (const symptom of results) {
       store.addSymptom(symptom);
+      console.log("Added symptom from NLP:", store.selectedSymptoms);
+      console.log([...store.selectedSymptoms]);
     }
   } catch (e) {
     const msg = e?.response?.data?.detail || e?.message || "Analysis failed.";

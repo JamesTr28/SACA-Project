@@ -3,8 +3,13 @@ import pandas as pd
 def get_precaution(disease: str):
     df = pd.read_csv("hf://datasets/shanover/disease_symptoms_prec_full/disease_sympts_prec_full.csv")
     result = df.loc[df['disease'].str.lower() == disease.lower(), 'precautions']
-    if not result.empty:
-        precautions = [p.strip() for p in result.values[0].split(',')]
+
+    if not result.empty and pd.notna(result.values[0]):
+        value = result.values[0]
+        if isinstance(value, str):
+            precautions = [p.strip() for p in value.split(',')]
+        else:
+            precautions = [str(value).strip()]
     else:
         precautions = []
 
