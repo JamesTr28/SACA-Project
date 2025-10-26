@@ -36,7 +36,7 @@
           class="text-entry"
           @keyup.enter="submitText"
         />
-        <button :disabled="!userInput" @click="submitText">Send</button>
+        <button :disabled="!userInput" @click="submitText">{{ t(`button.send`) }}</button>
         <p v-if="error" class="error-message">{{ error }}</p>
       </template>
       <!-- Submit and return result -->
