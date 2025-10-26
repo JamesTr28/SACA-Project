@@ -7,7 +7,7 @@ from transformers import MT5ForConditionalGeneration, T5TokenizerFast
 from huggingface_hub import login
 
 # ----------------- HARD-CODED CREDENTIALS (PRIVATE ONLY) -----------------
-HF_TOKEN = "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"  # <-- put your token here
+HF_TOKEN = ""  # <-- put your token here
 REPO_ID  = "Widewingz/MT_model1"                           # <-- your model repo
 # -------------------------------------------------------------------------
 
