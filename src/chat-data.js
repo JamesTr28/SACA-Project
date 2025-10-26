@@ -11,7 +11,17 @@ export const chatFlow = {
     ]
   },
   1: { key: 'fullName', type: 'text', text: 'To begin, what is your full name?', answers: [{ text: 'Continue', nextId: 2 }] },
-  2: { key: 'gender', type: 'choice', text: 'What is your gender?', answers: [ { text: 'Male', nextId: 3 }, { text: 'Female', nextId: 3 }, { text: 'Other', nextId: 3 }, { text: 'Prefer not to say', nextId: 3 } ] },
+  2: { 
+    key: 'gender', 
+    type: 'choice', 
+    text: 'What is your gender?', 
+    answers: [ 
+      { text: 'Male', nextId: 3, keyText: '2.a1' }, 
+      { text: 'Female', nextId: 3, keyText: '2.a2'  }, 
+      { text: 'Other', nextId: 3, keyText: '2.a3'  }, 
+      { text: 'Prefer not to say', nextId: 3,keyText: '2.a4'  } ] },
+
+  
   3: { key: 'age', type: 'text', text: 'And your age?', inputType: 'number', min: 1, max: 120, answers: [{ text: 'Continue', nextId: 4 }] },
   4: { key: 'weight', type: 'text', text: 'What is your current weight in kilograms (kg)? (Optional)', inputType: 'number', min: 1, max: 500, answers: [{ text: 'Continue', nextId: 5 }] },
   5: { key: 'conditions', type: 'text', text: 'Do you have any ongoing medical conditions, like diabetes or high blood pressure? (Optional)', answers: [{ text: 'Continue', nextId: 6 }] },
@@ -23,6 +33,7 @@ export const chatFlow = {
     key: 'service',
     type: 'choice',
     text: 'Thank you. How can I help you today?',
+    textKey:'',
     answers: [
       { text: 'General Check-up (by text)', nextId: 9 },      // Path 1: NLP
       { text: 'Select Symptoms by Image', nextId: 10 },  // Path 2: Symptom Picker (Restored)
