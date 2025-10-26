@@ -14,7 +14,7 @@ yes: "Yes",
     warlpiri: "Warlpiri",
 
     // Step texts + answer labels
-    "0.text": "What language would you like to use? English or Warlpiri?",
+    "0.text": "What language would you like to use? \n Nyuntu nyanungu wangkami nyampu-jangka manu-jangka?",
     "0.a1": "English",
     "0.a2": "Warlpiri",
 

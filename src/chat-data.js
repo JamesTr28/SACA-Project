@@ -4,7 +4,7 @@ export const chatFlow = {
     0: {
     key: 'language',
     type: 'choice',
-    text: 'What language would you like to use?', // Default fallback text
+    text: 'What language would you like to use?/ Nyuntu nyanungu wangkami nyampu-jangka manu-jangka?', // Default fallback text
     answers: [      // Path 1: NLP
       { text: 'English', nextId: 1 },  // Path 2: Symptom Picker (Restored)
       { text: 'Warlpiri', nextId: 1 }          // Path 3: Skin Upload

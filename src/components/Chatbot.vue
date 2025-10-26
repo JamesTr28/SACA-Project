@@ -333,7 +333,12 @@ const handleChoice = async (answer) => {
     addMessage(getTranslatedText(1), "bot");
   } else if (answer.text === "English" || answer.text === "Warlpiri") {
     language.value = answer.text;
-    addMessageNoT(`Language set to ${language.value}.`, "bot");
+    if(language.value == "English"){
+      addMessageNoT(`Language set to ${language.value}.`, "bot");
+    }
+    else {
+      addMessageNoT(`Language set to ${language.value}.`, "bot")
+    }
     // Translate next question before moving on
     goToNextStep(answer.nextId);
   } else {

@@ -2,17 +2,40 @@
   <section class="wrap">
     <h2>How this project works</h2>
     <div class="card">
-      <p>Welcome! Please provide some basic information before starting the triage.</p>
-      <p><strong>Note:</strong> This is a demo project. Do not use it for real medical decisions.</p>
-      <ol>
-        <li>You will be guided through a series of questions in a chat format.</li>
-        <li>Your information will be used to create a summary for review.</li>
-        <li>This information will be sent to the backend for a holistic judgement.</li>
-      </ol>
-      <div class="actions">
-        <button class="btn primary" @click="go">I understand and agree to start</button>
-      </div>
-    </div>
+  <p>
+    <strong>English:</strong><br>
+    Welcome! Please provide some basic information before starting the triage.
+  </p>
+  <p>
+    <strong>Warlpiri:</strong><br>
+    Yapa! Kurdu watiya nyampu yapa‐kurlu majja yapa­kurlu murnu marnku, nyinami triage‐warra wangkayarla.
+  </p>
+
+  <p>
+    <strong>English Note:</strong> This is a demo project. Do not use it for real medical decisions.<br>
+    <strong>Warlpiri Note:</strong> Nyinami: Pina‐yapa proyekti karrijikarla. Yapa-kurlu yaninjaku mirnlaku wangkami “real” wita­mi ­marnu ­warninjaku.
+  </p>
+
+  <ol>
+    <li>
+      <strong>English:</strong> You will be guided through a series of questions in a chat format.<br>
+      <strong>Warlpiri:</strong> Yapa-kurlu kurlu chat format­ku wangkami yirrarni nyanungu watiya yawulyurrpa jurnarda.
+    </li>
+    <li>
+      <strong>English:</strong> Your information will be used to create a summary for review.<br>
+      <strong>Warlpiri:</strong> Yapa-kurlu nyanungu marnu wangkami summary-kurlu yangka review­jarra.
+    </li>
+    <li>
+      <strong>English:</strong> This information will be sent to the backend for a holistic judgement.<br>
+      <strong>Warlpiri:</strong> Yapa-kurlu nyanungu marnu wangkami backend­kurlu karnalu holistic judgement kura­kurlu.
+    </li>
+  </ol>
+
+  <div class="actions">
+    <button class="btn primary" @click="go">I understand and agree to start / Nyinami-ngarni karnalu yaninja</button>
+  </div>
+</div>
+
   </section>
 </template>
 
