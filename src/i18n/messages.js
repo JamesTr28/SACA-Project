@@ -1,5 +1,3 @@
-import { send } from "vite"
-
 // src/i18n/messages.js
 const messages = {
   en: {
