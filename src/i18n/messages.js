@@ -1,10 +1,18 @@
+import { send } from "vite"
+
 // src/i18n/messages.js
 const messages = {
   en: {
+    placeholder:{
+      default:"Type your answer..."
+    },
+    button:{
+      send: "Send"
+    },
     brand: 'Intelligent Triage',
     nav: { home: 'Home', history: 'History', profile: 'Profile' },
     footer: { demo: 'Triage Demo' },
-yes: "Yes",
+    yes: "Yes",
     noSubmit: "No, submit",
     analyze: "Analyze",
     next: "Next",
@@ -242,6 +250,12 @@ yes: "Yes",
 
   
   wp: {
+    placeholder:{
+      default:"Wangkami nyampu jawurtu…"
+    },    
+    button:{
+      send: "Warlarni"
+    },
      yes: "Unga",
     noSubmit: "Wiya, yapa",
     analyze: "Yimi manu",

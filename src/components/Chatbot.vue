@@ -31,8 +31,8 @@
           :min="currentQuestion.min"
           :max="currentQuestion.max"
           :step="currentQuestion.step"
+          :placeholder="t(`placeholder.default`)"
           inputmode="numeric"
-          placeholder="Type your answer..."
           class="text-entry"
           @keyup.enter="submitText"
         />
@@ -141,6 +141,10 @@ import { chatFlow } from "../chat-data.js";
 import axios from "axios";
 import { classifyDisease } from "./severityRating.js";
 import i18nMessages from "@/i18n/messages"; // Renamed import to avoid conflict
+import { useI18n } from "@/i18n/useI18n.js";
+import { useUiStore } from "@/store/uiStore.js";
+const { t } = useI18n();
+const ui = useUiStore();
 
 /* ---------- API URLs ---------- */
 const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
@@ -333,11 +337,12 @@ const handleChoice = async (answer) => {
     addMessage(getTranslatedText(1), "bot");
   } else if (answer.text === "English" || answer.text === "Warlpiri") {
     language.value = answer.text;
-    if(language.value == "English"){
+    if (language.value == "English") {
+      ui.setLocale("en");
       addMessageNoT(`Language set to ${language.value}.`, "bot");
-    }
-    else {
-      addMessageNoT(`Language set to ${language.value}.`, "bot")
+    } else {
+      ui.setLocale("wp");
+      addMessageNoT(`Wangka-jangka nyampuju pinyi ${language.value}.`, "bot");
     }
     // Translate next question before moving on
     goToNextStep(answer.nextId);
