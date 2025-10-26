@@ -102,7 +102,7 @@
           />
 
           <button class="next-button" v-if="!isRec" @click="startRec">
-            🎙️ {{ t(`11.text`) }}
+            🎙️ Start/
           </button>
           <button class="next-button" v-else @click="stopRec">⏹ Stop</button>
           <button class="next-button" @click="triggerUpload">
