@@ -36,7 +36,9 @@
           class="text-entry"
           @keyup.enter="submitText"
         />
-        <button :disabled="!userInput" @click="submitText">{{ t(`button.send`) }}</button>
+        <button :disabled="!userInput" @click="submitText">
+          {{ t(`button.send`) }}
+        </button>
         <p v-if="error" class="error-message">{{ error }}</p>
       </template>
       <!-- Submit and return result -->
@@ -100,7 +102,7 @@
           />
 
           <button class="next-button" v-if="!isRec" @click="startRec">
-            🎙️ Start
+            🎙️ {{ t(`11.text`) }}
           </button>
           <button class="next-button" v-else @click="stopRec">⏹ Stop</button>
           <button class="next-button" @click="triggerUpload">
@@ -112,7 +114,7 @@
         </div>
 
         <button class="next-button" @click="submitNLPText">
-          Analyze Symptoms
+          {{ t(`analyze`) }}
         </button>
       </template>
 
@@ -322,10 +324,10 @@ async function handleSubmit() {
 
 /* ---------- CHOICES / TEXT ---------- */
 const handleChoice = async (answer) => {
-  if (answer.text === "No, submit") {
+  if (answer.text === "No, submit/Wiya, yapa") {
     await handleSubmit();
     goToNextStep(answer.nextId);
-  } else if (answer.text === "Reset") {
+  } else if (answer.text === "Reset/Wurra") {
     // Reset conversation
     messages.value = [];
     currentQuestionId.value = 1;

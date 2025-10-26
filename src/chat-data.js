@@ -16,10 +16,10 @@ export const chatFlow = {
     type: 'choice', 
     text: 'What is your gender?', 
     answers: [ 
-      { text: 'Male', nextId: 3, keyText: '2.a1' }, 
-      { text: 'Female', nextId: 3, keyText: '2.a2'  }, 
-      { text: 'Other', nextId: 3, keyText: '2.a3'  }, 
-      { text: 'Prefer not to say', nextId: 3,keyText: '2.a4'  } ] },
+      { text: 'Male/Wati', nextId: 3, keyText: '2.a1' }, 
+      { text: 'Female/Wati-jarra', nextId: 3, keyText: '2.a2'  }, 
+      { text: 'Other/Yangka kujakuju inna', nextId: 3, keyText: '2.a3'  }, 
+      { text: 'Prefer not to say/Yimi manu nganta yimi', nextId: 3,keyText: '2.a4'  } ] },
 
   
   3: { key: 'age', type: 'text', text: 'And your age?', inputType: 'number', min: 1, max: 120, answers: [{ text: 'Continue', nextId: 4 }] },
@@ -35,9 +35,9 @@ export const chatFlow = {
     text: 'Thank you. How can I help you today?',
     textKey:'',
     answers: [
-      { text: 'General Check-up (by text)', nextId: 9 },      // Path 1: NLP
-      { text: 'Select Symptoms by Image', nextId: 10 },  // Path 2: Symptom Picker (Restored)
-      { text: 'Skin Lesion Analysis', nextId: 11 }          // Path 3: Skin Upload
+      { text: 'General Check-up/Kurdu-mani ngurra-wangu warrki', nextId: 9 },      // Path 1: NLP
+      { text: 'Select Symptoms by Image/Yimi-kirra kuja nyangu', nextId: 10 },  // Path 2: Symptom Picker (Restored)
+      { text: 'Skin Lesion Analysis/Kulyakurlangu yimi-wana', nextId: 11 }          // Path 3: Skin Upload
     ]
   },
 
@@ -82,26 +82,26 @@ export const chatFlow = {
     type: 'choice',
     text: 'Your previous input has been recorded. Would you like to add more information?',
     answers: [
-      { text: 'Yes', nextId: 15 },      // Path 1: NLP
-      { text: 'No, submit', nextId: 16 }
+      { text: 'Yes/Unga', nextId: 15 },      // Path 1: NLP
+      { text: 'No, submit/Wiya, yapa', nextId: 16 }
     ]
   },  15: {
     key: 'service',
     type: 'choice',
     text: 'Thank you. Please choose another input method:',
     answers: [
-      { text: 'General Check-up (by text)', nextId: 9 },      // Path 1: NLP
-      { text: 'Select Symptoms by Image', nextId: 10 },  // Path 2: Symptom Picker (Restored)
-      { text: 'Skin Lesion Analysis', nextId: 11 }          // Path 3: Skin Upload
+      { text: 'General Check-up (by text)/Kurdu-mani ngurra-wangu warrki', nextId: 9 },      // Path 1: NLP
+      { text: 'Select Symptoms by Image/Yimi-kirra kuja nyangu', nextId: 10 },  // Path 2: Symptom Picker (Restored)
+      { text: 'Skin Lesion Analysis/Kulyakurlangu yimi-wana', nextId: 11 }          // Path 3: Skin Upload
     ]
   },
    16: {
     key: 'service',
     type: 'choice',
-    text: 'Thank you. Would you like to reset or finish?',
+    text: 'Thank you. Would you like to reset or finish?/ Ngaju-nyangu wita yimi-ngarrirni ngurra...',
     answers: [
-      { text: 'Reset', nextId: 13 },      // Path 1: NLP
-      { text: 'Finish', nextId: 13 },  // Path 2: Symptom Picker (Restored)        // Path 3: Skin Upload
+      { text: 'Reset/Wurra', nextId: 13 },      // Path 1: NLP
+      { text: 'Finish/Wita-puru', nextId: 13 },  // Path 2: Symptom Picker (Restored)        // Path 3: Skin Upload
     ]
   },
 };
